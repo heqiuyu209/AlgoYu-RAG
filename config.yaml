@@ -1,0 +1,89 @@
+# ============================================================
+# Learning OS — Configuration
+# ============================================================
+# All paths are relative to this config file's location,
+# unless they are absolute.
+
+learning_os:
+
+  # ── Paths ──────────────────────────────────────────
+  paths:
+    data_dir: "./data"           # ingested documents, chunks cache
+    log_dir: "./logs"            # log files (rotated)
+
+  # ── Ingest defaults ────────────────────────────────
+  ingest:
+    default_language: "auto"     # "zh" | "en" | "auto" (heuristic)
+    stop_on_error: false         # true = halt pipeline on first failure
+
+  # ── Parser ─────────────────────────────────────────
+  parser:
+    type: "auto"                 # "auto" = detect by file extension
+                                 # explicit: "pdf" | "markdown" | "docx" | ...
+
+  # ── Cleaner ────────────────────────────────────────
+  # (placeholder — not used in V1; parsers produce clean markdown)
+  cleaner:
+    type: "none"
+
+  # ── Chunker ────────────────────────────────────────
+  chunker:
+    type: "recursive"
+    chunk_size: 1000             # target characters per chunk
+    chunk_overlap: 200           # overlap between consecutive chunks
+    separators:                  # tried in order; first match splits
+      - "\n\n"
+      - "\n"
+      - "。"
+      - ". "
+      - " "
+
+  # ── Embedder ───────────────────────────────────────
+  embedder:
+    type: "bge-m3"
+    model_name: "BAAI/bge-m3"    # HuggingFace model id
+    device: "cpu"                # "cpu" | "cuda" | "auto"
+    batch_size: 32               # texts per encode call
+    normalize: true              # L2-normalise output vectors
+
+  # ── Vector Store ───────────────────────────────────
+  vector_store:
+    type: "qdrant"
+    # Use "location: :memory:" for local testing without a Qdrant server.
+    # Use "host: localhost / port: 6333" for a remote or Docker server.
+    host: "localhost"
+    port: 6333
+    grpc_port: 6334
+    prefer_grpc: false
+    collection_name: "learning_os"
+    # Qdrant creates the collection if it does not exist.
+    # These are the creation parameters:
+    vector_size: 1024            # must match embedder dimension (BGE-M3 = 1024)
+    distance: "Cosine"
+
+  # ── Retriever ──────────────────────────────────────
+  retriever:
+    type: "vector"
+    top_k: 10                    # default results per query
+
+  # ── LLM ────────────────────────────────────────────
+  llm:
+    # Built-in providers:
+    #   "anthropic"        — native Anthropic Messages API
+    #   "openai-compatible" — OpenAI, DeepSeek, OpenRouter, vLLM, etc.
+    type: "openai-compatible"
+    model: "deepseek-chat"
+    base_url: "https://api.deepseek.com"
+    api_key_env: "DEEPSEEK_API_KEY"
+    max_tokens: 4096
+    temperature: 0.3
+    timeout: 60.0                # seconds
+    max_retries: 3               # exponential backoff on 429 / 5xx / timeout
+    retry_delay: 1.0             # seconds between retries (doubles each attempt)
+
+  # ── Logging ────────────────────────────────────────
+  logging:
+    level: "INFO"                # DEBUG | INFO | WARNING | ERROR
+    format: "text"               # "text" | "json"
+    file_enabled: true           # also write logs to file
+    file_path: "./logs/learning_os.log"
