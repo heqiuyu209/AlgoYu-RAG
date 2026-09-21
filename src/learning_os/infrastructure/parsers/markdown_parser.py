@@ -25,8 +25,6 @@ from learning_os.domain.models import Document
 
 logger = logging.getLogger(__name__)
 
-_FRONT_MATTER_RE = r"^---\s*$"
-# Supported file extensions (case-insensitive).
 _SUPPORTED = frozenset({".md", ".markdown"})
 
 
@@ -67,14 +65,6 @@ class MarkdownParser(Parser):
             raise ParsingError(
                 f"Cannot read file: {resolved} ({exc})", path=resolved
             ) from exc
-
-        # Normalise line endings to LF so that SHA-256 is consistent
-        # across platforms (Windows writes CRLF, but Markdown is
-        # conventionally LF).
-        full_text = raw_bytes.decode("utf-8").replace("\r\n", "\n")
-        # Re-encode normalised text for the SHA-256 digest so the
-        # document ID is platform-independent.
-        raw_bytes = full_text.encode("utf-8")
 
         # Separate front matter from body.
         metadata: dict[str, object]

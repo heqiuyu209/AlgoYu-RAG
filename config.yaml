@@ -24,7 +24,7 @@ learning_os:
   # ── Cleaner ────────────────────────────────────────
   # (placeholder — not used in V1; parsers produce clean markdown)
   cleaner:
-    type: "none"
+    type: "markdown"
 
   # ── Chunker ────────────────────────────────────────
   chunker:
@@ -45,17 +45,20 @@ learning_os:
     device: "cpu"                # "cpu" | "cuda" | "auto"
     batch_size: 32               # texts per encode call
     normalize: true              # L2-normalise output vectors
+    cache_folder: "./Embedding"   # local model cache directory
 
   # ── Vector Store ───────────────────────────────────
   vector_store:
     type: "qdrant"
     # Use "location: :memory:" for local testing without a Qdrant server.
     # Use "host: localhost / port: 6333" for a remote or Docker server.
-    host: "localhost"
+    host: 127.0.0.1
     port: 6333
     grpc_port: 6334
     prefer_grpc: false
     collection_name: "learning_os"
+    # location: ":memory:"
+    # collection_name: "learning_os"
     # Qdrant creates the collection if it does not exist.
     # These are the creation parameters:
     vector_size: 1024            # must match embedder dimension (BGE-M3 = 1024)
@@ -72,7 +75,7 @@ learning_os:
     #   "anthropic"        — native Anthropic Messages API
     #   "openai-compatible" — OpenAI, DeepSeek, OpenRouter, vLLM, etc.
     type: "openai-compatible"
-    model: "deepseek-chat"
+    model: "deepseek-v4-flash"
     base_url: "https://api.deepseek.com"
     api_key_env: "DEEPSEEK_API_KEY"
     max_tokens: 4096

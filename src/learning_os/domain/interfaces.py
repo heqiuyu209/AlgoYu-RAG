@@ -236,6 +236,11 @@ class VectorStore(ABC):
         """Return the total number of chunks currently in the store."""
         ...
 
+    @abstractmethod
+    def reset(self) -> None:
+        "clear all the data in the entire database"
+        ...
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Retriever
@@ -411,3 +416,22 @@ class Message:
 
     content: str
     """The message body — plain text or formatted instructions."""
+
+
+
+# ══════════════════════════════════════════════════════════════════════
+# Cleaners
+# ══════════════════════════════════════════════════════════════════════
+
+
+class Cleaner(ABC):
+    """
+    清洗器接口：负责对文本进行规范化和去噪处理。
+    """
+
+    @abstractmethod
+    def clean(self, text: str) -> str:
+        """
+        接收一段原始文本，返回清洗后的文本。
+        """
+        ...

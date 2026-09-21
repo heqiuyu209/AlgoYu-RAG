@@ -114,7 +114,10 @@ class Container:
         return _resolve(PARSER_REGISTRY, self._cfg["parser"], "parser")
 
     def cleaner(self):
-        return _resolve(CLEANER_REGISTRY, self._cfg["cleaner"], "cleaner")
+        cfg = self._cfg.get("cleaner", {})
+        c_type = cfg.get("type", "none")
+        from learning_os.infrastructure.cleaners.registry import get_cleaner
+        return get_cleaner(c_type)
 
     def chunker(self):
         return _resolve(CHUNKER_REGISTRY, self._cfg["chunker"], "chunker")
@@ -128,9 +131,19 @@ class Container:
         )
 
     def retriever(self):
-        return _resolve(
-            RETRIEVER_REGISTRY, self._cfg["retriever"], "retriever"
-        )
+        cfg = self._cfg.get("retriever", {})
+        r_type = cfg.get("type", "vector")
+
+        # 2. 显式装配依赖
+        if r_type == "vector":
+            from learning_os.infrastructure.retrievers.vector_retriever import VectorRetriever
+            return VectorRetriever(
+                # 这就是依赖注入的灵魂：复用容器中已经建好的单例！
+                embedder=self.embedder(),
+                vector_store=self.vector_store()
+            )
+        else:
+            raise ValueError(f"Unknown retriever type: {r_type}")
 
     def llm(self):
         return _resolve(LLM_REGISTRY, self._cfg["llm"], "llm")
@@ -141,3 +154,41 @@ class Container:
     def config(self) -> dict[str, Any]:
         """The raw ``learning_os`` config block."""
         return self._cfg
+
+
+    def ingest_pipeline(self):
+        from learning_os.application.ingest import IngestPipeline
+        return IngestPipeline(
+            parser=self.parser(),
+            chunker=self.chunker(),
+            embedder=self.embedder(),
+            vector_store=self.vector_store(),
+            cleaner=self.cleaner()
+        )
+
+    def llm(self):
+        import os
+        cfg = self._cfg.get("llm", {})
+        l_type = cfg.get("type", "openai-compatible")
+
+        from learning_os.infrastructure.llms.registry import LLM_REGISTRY
+        llm_cls = LLM_REGISTRY.get(l_type)
+        if not llm_cls:
+            raise ValueError(f"Unknown llm type: {l_type}. Available: {list(LLM_REGISTRY.keys())}")
+
+        # 🔑 智能解析密钥：优先读直接配的 api_key，如果没有，则尝试从 api_key_env 指定的环境变量中获取
+        api_key = cfg.get("api_key", "")
+        api_key_env = cfg.get("api_key_env")
+        if api_key_env and not api_key:
+            api_key = os.getenv(api_key_env, "")
+
+        return llm_cls(
+            model=cfg.get("model", "deepseek-chat"),
+            base_url=cfg.get("base_url", "https://api.deepseek.com"),
+            api_key=api_key,
+            temperature=cfg.get("temperature", 0.3),
+            max_tokens=cfg.get("max_tokens", 4096),
+            timeout=cfg.get("timeout", 60.0),
+            max_retries=cfg.get("max_retries", 3),
+            retry_delay=cfg.get("retry_delay", 1.0),
+        )

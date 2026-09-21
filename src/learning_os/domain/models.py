@@ -182,6 +182,8 @@ class Chunk:
     """Dense vector populated by the :class:`Embedder`.  ``None`` until
     ``embedding`` is run."""
 
+    score: float | None = None
+
     def __post_init__(self) -> None:
         # Derive content hash if the caller left it empty.
         if not self.id:

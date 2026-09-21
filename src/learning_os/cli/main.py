@@ -46,7 +46,6 @@ logger = logging.getLogger(__name__)
 # callback
 # ══════════════════════════════════════════════════════════════════════
 
-
 @app.callback()
 def _main(
     ctx: typer.Context,
@@ -66,11 +65,15 @@ def _main(
         LLM_REGISTRY,
         PARSER_REGISTRY,
         VECTOR_STORE_REGISTRY,
+        CLEANER_REGISTRY,
     )
 
     # Wire plugin registries into the container.
     from learning_os.infrastructure.chunkers.registry import (
         CHUNKER_REGISTRY as CR,
+    )
+    from learning_os.infrastructure.cleaners.registry import (
+        CLEANER_REGISTRY as CLR,
     )
     from learning_os.infrastructure.embedders.registry import (
         EMBEDDER_REGISTRY as ER,
@@ -83,6 +86,7 @@ def _main(
         VECTOR_STORE_REGISTRY as VSR,
     )
 
+    CLEANER_REGISTRY.update(CLR)
     CHUNKER_REGISTRY.update(CR)
     EMBEDDER_REGISTRY.update(ER)
     LLM_REGISTRY.update(LR)
@@ -116,99 +120,61 @@ def ingest(
     container: Container = ctx.obj
     cfg = container.config
 
-    # Resolve plugins
-    chunker_cfg = dict(cfg["chunker"])
-
-    chunker_cfg = dict(cfg["chunker"])
-    chunker_cfg.pop("type", None)
-    chunker_cfg.setdefault("subject", subject)
-    chunker_cfg.setdefault("topic", topic)
-
-    embedder_cfg = dict(cfg["embedder"])
-    embedder_cfg.pop("type", None)
-
-    vector_store_cfg = dict(cfg["vector_store"])
-    vector_store_cfg.pop("type", None)
-
-    # Build pipeline components
+    # 1. 直接向容器索要装配好的完整流水线
     try:
-        chunker = container.chunker()
-        if chunker is None:
-            typer.echo("❌ No chunker configured.", err=True)
-            raise typer.Exit(1)
-        chunker._subject = subject or chunker._subject
-        chunker._topic = topic or chunker._topic
+        pipeline = container.ingest_pipeline()
     except Exception as e:
-        typer.echo(f"❌ Chunker init failed: {e}", err=True)
+        typer.echo(f"❌ Pipeline initialization failed: {e}", err=True)
         raise typer.Exit(1)
 
-    try:
-        embedder = container.embedder()
-        if embedder is None:
-            typer.echo("❌ No embedder configured.", err=True)
-            raise typer.Exit(1)
-    except Exception as e:
-        typer.echo(f"❌ Embedder init failed: {e}", err=True)
-        raise typer.Exit(1)
+    # 2. 覆盖 CLI 传入的标签（Tags）
+    if subject:
+        pipeline.chunker._subject = subject
+    if topic:
+        pipeline.chunker._topic = topic
+    if language and language != "auto":
+        pipeline.chunker._language = language
 
-    try:
-        store = container.vector_store()
-        if store is None:
-            typer.echo("❌ No vector store configured.", err=True)
-            raise typer.Exit(1)
-    except Exception as e:
-        typer.echo(f"❌ Vector store init failed: {e}", err=True)
-        raise typer.Exit(1)
-
-    # Load parser registry
+    # 准备 Parser 路由表
     import learning_os.infrastructure.parsers.registry as pr
 
-    # Walk paths and ingest
-    total = 0
+    total_files = 0
+    # 3. 遍历文件
     for glob_pattern in paths:
         p = Path(glob_pattern)
-        if p.is_dir():
-            files = list(p.rglob("*"))
-        else:
-            files = [p]
+        files = list(p.rglob("*")) if p.is_dir() else [p]
 
         for fp in files:
             if not fp.is_file():
                 continue
 
-            # Find a parser that supports this file
-            matched = None
+            # 动态寻找能处理该后缀的 Parser
+            matched_parser = None
             for name, cls in pr.PARSER_REGISTRY.items():
-                parser = cls()
-                if parser.supports(fp):
-                    matched = parser
+                parser_inst = cls()
+                if parser_inst.supports(fp):
+                    matched_parser = parser_inst
                     break
 
-            if matched is None:
+            if matched_parser is None:
                 typer.echo(f"  ⏭  No parser for: {fp} (skipped)")
                 continue
 
+            # 把匹配到的 Parser 临时换进流水线
+            pipeline.parser = matched_parser
+
+            # 4. 核心：一句代码跑完（解析 -> 清洗 -> 分块 -> 向量化 -> 存储）
             try:
-                doc = matched.parse(fp)
-                chunks = chunker.chunk(doc)
-                if not chunks:
-                    typer.echo(f"  ⏭  No chunks from: {fp}")
-                    continue
-
-                texts = [c.content for c in chunks]
-                vectors = embedder.embed(texts)
-                for c, vec in zip(chunks, vectors):
-                    c.embedding = vec
-
-                store.store(chunks)
-                typer.echo(f"  ✓  {fp} → {len(chunks)} chunks")
-                total += 1
+                chunks_count = pipeline.run(fp)
+                if chunks_count > 0:
+                    typer.echo(f"  ✓  {fp} → {chunks_count} chunks")
+                    total_files += 1
             except Exception as e:
-                typer.echo(f"  ✗  {fp}: {e}")
-                if cfg["ingest"].get("stop_on_error"):
+                typer.echo(f"  ✗  {fp} failed: {e}", err=True)
+                if cfg.get("ingest", {}).get("stop_on_error"):
                     raise
 
-    typer.echo(f"\n📚 Ingested {total} document(s).")
+    typer.secho(f"\n📚 Successfully ingested {total_files} document(s).", fg=typer.colors.GREEN)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -376,7 +342,20 @@ def stats(ctx: typer.Context) -> None:
 @app.command()
 def rebuild(ctx: typer.Context) -> None:
     """Rebuild the vector index from scratch."""
-    typer.echo("[TODO] rebuild — drops and re-creates the Qdrant collection.")
+    typer.echo(" rebuild — drops and re-creates the Qdrant collection.")
+    if not typer.confirm("This will permanently delete ALL data in the vector store. Continue?"):
+        raise typer.Abort()
+
+    container: Container = ctx.obj
+    store = container.vector_store()
+
+    if store is None:
+        typer.echo("❌ No vector store configured.", err=True)
+        raise typer.Exit(1)
+
+    typer.echo("Resetting vector store...")
+    store.reset()
+    typer.secho("✓ Vector store has been completely reset. You can now run 'los ingest' again.", fg=typer.colors.GREEN)
 
 
 # ══════════════════════════════════════════════════════════════════════

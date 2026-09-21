@@ -42,11 +42,13 @@ class BGEM3Embedder(Embedder):
         device: str = "auto",
         batch_size: int = 32,
         normalize: bool = True,
+        cache_folder: str | None = None,
     ) -> None:
         self._model_name = model_name
         self._device = device
         self._batch_size = batch_size
         self._normalize = normalize
+        self._cache_folder = cache_folder
         self._model: SentenceTransformer | None = None
 
     # ── Embedder ABC ────────────────────────────────────
@@ -122,10 +124,10 @@ class BGEM3Embedder(Embedder):
         try:
             from sentence_transformers import SentenceTransformer
 
-            model = SentenceTransformer(
-                self._model_name,
-                device=self._device,
-            )
+            model_kwargs: dict = {"device": self._device}
+            if self._cache_folder:
+                model_kwargs["cache_folder"] = self._cache_folder
+            model = SentenceTransformer(self._model_name, **model_kwargs)
         except Exception as exc:
             raise EmbeddingError(
                 f"Failed to load model '{self._model_name}': {exc}"

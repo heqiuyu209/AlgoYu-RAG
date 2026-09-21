@@ -43,3 +43,6 @@ Thumbs.db
 logs/
 data/
 .claude/
+
+# Model cache (downloadable via HuggingFace)
+Embedding/

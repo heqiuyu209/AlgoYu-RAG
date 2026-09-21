@@ -27,9 +27,7 @@ class VectorRetriever(Retriever):
         vector_store: A :class:`VectorStore` instance (e.g. ``QdrantStore``).
     """
 
-    def __init__(
-        self, *, embedder: Embedder, vector_store: VectorStoreABC
-    ) -> None:
+    def __init__(self, *, embedder: Embedder, vector_store: VectorStoreABC) -> None:
         self._embedder = embedder
         self._vector_store = vector_store
 

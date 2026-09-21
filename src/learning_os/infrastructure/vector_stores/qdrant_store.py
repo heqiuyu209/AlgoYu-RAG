@@ -176,6 +176,18 @@ class QdrantStore(VectorStore):
                 f"Delete for document '{document_id}' failed: {exc}"
             ) from exc
 
+    def reset(self) -> None:
+        """Clear all data by dropping and recreating the collection."""
+        client = self._get_client()
+        try:
+            client.delete_collection(collection_name=self._collection_name)
+            logger.info("Deleted collection '%s'.", self._collection_name)
+        except Exception as exc:
+            logger.debug("Collection not found during reset, skipping delete: %s", exc)
+
+        self._ensure_collection()
+
+
     def count(self) -> int:
         """Return the total number of chunks in the collection."""
         self._ensure_collection()
@@ -296,18 +308,29 @@ class QdrantStore(VectorStore):
 def _build_filter(filter_dict: dict):
     """Convert a flat ``{key: value}`` dict into a Qdrant ``Filter``.
 
-    V1 supports exact equality on any payload key.  The ``document_id``
-    key is the primary use case.
+    Supports exact equality. If value is a list (e.g., tags), it applies
+    'AND' semantics (the document must contain all items in the list).
     """
     from qdrant_client import models
 
-    conditions = [
-        models.FieldCondition(
-            key=key,
-            match=models.MatchValue(value=value),
-        )
-        for key, value in filter_dict.items()
-    ]
+    conditions = []
+    for key, value in filter_dict.items():
+        if isinstance(value, list):
+            for item in value:
+                conditions.append(
+                    models.FieldCondition(
+                        key=key,
+                        match=models.MatchValue(value=item)
+                    )
+                )
+        else:
+            conditions.append(
+                models.FieldCondition(
+                    key=key,
+                    match=models.MatchValue(value=value),
+                )
+            )
+
     return models.Filter(must=conditions)
 
 
@@ -337,4 +360,5 @@ def _scored_point_to_chunk(sp) -> Chunk:
         content=p.get("content", ""),
         metadata=meta,
         embedding=sp.vector if sp.vector else None,
+        score=sp.score,
     )
