@@ -15,6 +15,7 @@ Commands::
 
 from __future__ import annotations
 
+import chunk
 import logging
 from pathlib import Path
 
@@ -127,13 +128,6 @@ def ingest(
         typer.echo(f"❌ Pipeline initialization failed: {e}", err=True)
         raise typer.Exit(1)
 
-    # 2. 覆盖 CLI 传入的标签（Tags）
-    if subject:
-        pipeline.chunker._subject = subject
-    if topic:
-        pipeline.chunker._topic = topic
-    if language and language != "auto":
-        pipeline.chunker._language = language
 
     # 准备 Parser 路由表
     import learning_os.infrastructure.parsers.registry as pr
@@ -148,24 +142,14 @@ def ingest(
             if not fp.is_file():
                 continue
 
-            # 动态寻找能处理该后缀的 Parser
-            matched_parser = None
-            for name, cls in pr.PARSER_REGISTRY.items():
-                parser_inst = cls()
-                if parser_inst.supports(fp):
-                    matched_parser = parser_inst
-                    break
-
-            if matched_parser is None:
-                typer.echo(f"  ⏭  No parser for: {fp} (skipped)")
-                continue
-
-            # 把匹配到的 Parser 临时换进流水线
-            pipeline.parser = matched_parser
-
             # 4. 核心：一句代码跑完（解析 -> 清洗 -> 分块 -> 向量化 -> 存储）
             try:
-                chunks_count = pipeline.run(fp)
+                chunks_count = pipeline.run(
+                    fp,
+                    subject=subject or None,
+                    topic=topic or None,
+                    language=None if language == "auto" else language,
+                )
                 if chunks_count > 0:
                     typer.echo(f"  ✓  {fp} → {chunks_count} chunks")
                     total_files += 1
@@ -362,13 +346,34 @@ def rebuild(ctx: typer.Context) -> None:
 # config-show
 # ══════════════════════════════════════════════════════════════════════
 
+def _mask_secrets(data):
+    if isinstance(data, dict):
+        result = {}
 
-@app.command()
-def config_show(ctx: typer.Context) -> None:
-    """Print the current effective configuration."""
+        for key, value in data.items():
+            if key.lower() in {"api_key", "password", "token", "secret"}:
+                result[key] = "***"
+            else:
+                result[key] = _mask_secrets(value)
+
+        return result
+
+    if isinstance(data, list):
+        return [_mask_secrets(item) for item in data]
+
+    return data
+
+@app.command("config-show")
+def config_show(ctx: typer.Context):
     container: Container = ctx.obj
-    # Pretty-print the config (hide sensitive keys).
-    cfg = dict(container.config)
-    # Redact API keys
-    cfg_str = yaml.dump(cfg, default_flow_style=False, allow_unicode=True)
-    typer.echo(cfg_str)
+    cfg = container.config
+
+    safe_cfg = _mask_secrets(cfg)
+
+    typer.echo(
+        yaml.dump(
+            safe_cfg,
+            allow_unicode=True,
+            sort_keys=False,
+        )
+    )

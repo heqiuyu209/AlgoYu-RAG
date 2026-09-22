@@ -81,7 +81,13 @@ def _resolve(
         import os
         env_name: str = kwargs.pop("api_key_env")
         kwargs["api_key"] = os.environ.get(env_name, "")
-    logger.debug("Resolving %s: %s(%s)", label, cls.__name__, kwargs)
+
+    safe_kwargs = kwargs.copy()
+
+    if "api_key" in safe_kwargs:
+        safe_kwargs["api_key"] = "***"
+
+    logger.debug("Resolving %s: %s(%s)", label, cls.__name__, safe_kwargs)
     return cls(**kwargs)
 
 
@@ -155,40 +161,16 @@ class Container:
         """The raw ``learning_os`` config block."""
         return self._cfg
 
-
     def ingest_pipeline(self):
         from learning_os.application.ingest import IngestPipeline
+        from learning_os.infrastructure.parsers.registry import PARSER_REGISTRY
+
+        parsers = [cls() for cls in PARSER_REGISTRY.values()]
+
         return IngestPipeline(
-            parser=self.parser(),
-            chunker=self.chunker(),
-            embedder=self.embedder(),
-            vector_store=self.vector_store(),
-            cleaner=self.cleaner()
-        )
-
-    def llm(self):
-        import os
-        cfg = self._cfg.get("llm", {})
-        l_type = cfg.get("type", "openai-compatible")
-
-        from learning_os.infrastructure.llms.registry import LLM_REGISTRY
-        llm_cls = LLM_REGISTRY.get(l_type)
-        if not llm_cls:
-            raise ValueError(f"Unknown llm type: {l_type}. Available: {list(LLM_REGISTRY.keys())}")
-
-        # 🔑 智能解析密钥：优先读直接配的 api_key，如果没有，则尝试从 api_key_env 指定的环境变量中获取
-        api_key = cfg.get("api_key", "")
-        api_key_env = cfg.get("api_key_env")
-        if api_key_env and not api_key:
-            api_key = os.getenv(api_key_env, "")
-
-        return llm_cls(
-            model=cfg.get("model", "deepseek-chat"),
-            base_url=cfg.get("base_url", "https://api.deepseek.com"),
-            api_key=api_key,
-            temperature=cfg.get("temperature", 0.3),
-            max_tokens=cfg.get("max_tokens", 4096),
-            timeout=cfg.get("timeout", 60.0),
-            max_retries=cfg.get("max_retries", 3),
-            retry_delay=cfg.get("retry_delay", 1.0),
+            parsers = parsers,
+            chunker = self.chunker(),
+            embedder = self.embedder(),
+            vector_store = self.vector_store(),
+            cleaner = self.cleaner(),
         )

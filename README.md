@@ -1,7 +1,7 @@
 # Learning OS — Technical Documentation
 
-> **Version:** 1.0.0-rc1
-> **Status:** Release Candidate
+> **Version:** 1.0.0
+> **Status:** Stable
 > **Tests:** 135 passed
 
 ---

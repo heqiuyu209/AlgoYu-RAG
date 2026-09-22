@@ -99,8 +99,9 @@ class BGEM3Embedder(Embedder):
 
     @property
     def dimension(self) -> int:
-        """BGE-M3 dense vector dimension (hard-coded, always 1024)."""
+        """BGE-M3 dense vector dimension."""
         return _BGE_M3_DIMENSION
+
 
     # ── internal ───────────────────────────────────────
 
@@ -133,14 +134,17 @@ class BGEM3Embedder(Embedder):
                 f"Failed to load model '{self._model_name}': {exc}"
             ) from exc
 
-        actual_dim = model.get_sentence_embedding_dimension()
-        if actual_dim != _BGE_M3_DIMENSION:
-            logger.warning(
-                "Model '%s' dimension is %d (expected %d for BGE-M3). "
-                "Your vector_store config must use %d.",
-                self._model_name,
-                actual_dim,
-                _BGE_M3_DIMENSION,
-                actual_dim,
+        actual_dim = model.get_embedding_dimension()
+
+        if actual_dim is None:
+            raise EmbeddingError(
+                f"Could not determine dimension for model '{self._model_name}'."
             )
+
+        if actual_dim != _BGE_M3_DIMENSION:
+            raise EmbeddingError(
+                f"Model '{self._model_name}' has dimension {actual_dim}, "
+                f"but BGEM3Embedder requires {_BGE_M3_DIMENSION}."
+            )
+
         return model

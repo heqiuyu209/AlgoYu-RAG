@@ -13,19 +13,33 @@ class IngestPipeline:
 
     def __init__(
             self,
-            parser: Parser,
+            parsers: list[Parser],
             chunker: Chunker,
             embedder: Embedder,
             vector_store: VectorStore,
-            cleaner: Cleaner | None = None
+            cleaner: Cleaner | None = None,
     ):
-        self.parser = parser
+        self.parsers = parsers
         self.chunker = chunker
         self.embedder = embedder
         self.store = vector_store
         self.cleaner = cleaner
 
-    def run(self, file_path: Path | str) -> int:
+    def _select_parser(self, path: Path) -> Parser | None:
+        for parser in self.parsers:
+            if parser.supports(path):
+                return parser
+
+        return None
+
+    def run(
+            self,
+            file_path: Path | str,
+            subject: str | None = None,
+            topic: str | None = None,
+            language: str | None = None,
+    ) -> int:
+
         """
         执行入库流程。返回成功入库的 Chunk 数量。
         """
@@ -33,7 +47,21 @@ class IngestPipeline:
         logger.info(f"🚀 开始处理文件: {path.name}")
 
         # 1. 解析 (Parse)
-        document = self.parser.parse(path)
+        parser = self._select_parser(path)
+
+        if parser is None:
+            raise ValueError(f"No parser supports file: {path}")
+
+        document = parser.parse(path)
+
+        if subject:
+            document.metadata["subject"] = subject
+
+        if topic:
+            document.metadata["topic"] = topic
+
+        if language:
+            document.metadata["language"] = language
 
         # 2. 清洗 (Clean) - 如果配置了 Cleaner，就洗一下
         if self.cleaner:

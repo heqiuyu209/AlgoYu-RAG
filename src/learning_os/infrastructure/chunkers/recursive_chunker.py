@@ -197,18 +197,18 @@ class RecursiveChunker(Chunker):
         meta_dict = dict(doc.metadata)
 
         return ChunkMetadata(
-            source=str(doc.source_path),
-            source_type=doc.source_type,
-            subject=self._subject or str(meta_dict.pop("subject", "")),
-            topic=self._topic or str(meta_dict.pop("topic", "")),
-            chapter=str(meta_dict.pop("chapter", "") or ""),
-            title=str(meta_dict.pop("title", "") or ""),  # type: ignore[arg-type]
-            language=str(meta_dict.pop("language", "auto")),
-            tags=(
+            source = str(doc.source_path),
+            source_type = doc.source_type,
+            subject = self._subject or str(meta_dict.pop("subject", "")),
+            topic = self._topic or str(meta_dict.pop("topic", "")),
+            chapter = str(meta_dict.pop("chapter", "") or ""),
+            title = str(meta_dict.pop("title", "") or ""),  # type: ignore[arg-type]
+            language = str(meta_dict.pop("language", "auto")),
+            tags = (
                 list(meta_dict.pop("tags", []))
                 if isinstance(meta_dict.get("tags"), list)
                 else []
             ),
-            chunk_index=chunk_index,
-            total_chunks=total_chunks,
+            chunk_index = chunk_index,
+            total_chunks = total_chunks,
         )

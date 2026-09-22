@@ -2,6 +2,9 @@ import streamlit as st
 from pathlib import Path
 import yaml
 from dotenv import load_dotenv
+from joblib.func_inspect import filter_args
+
+from learning_os.domain import MetadataFilter
 
 # 1. 页面基本配置
 st.set_page_config(
@@ -99,16 +102,18 @@ if prompt := st.chat_input("输入你想问的问题（例如：什么是博弈�
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 组装过滤条件
-    filters = {}
-    if filter_subject.strip():
-        filters["subject"] = filter_subject.strip()
-    if filter_topic.strip():
-        filters["topic"] = filter_topic.strip()
-    filter_arg = filters if filters else None
+    subject = filter_subject.strip() or None
+    topic = filter_topic.strip() or None
 
-    # 第一步：RAG 检索
-    with st.spinner("🔍 正在知识库中检索相关讲义..."):
+    if subject or topic:
+        filter_arg = MetadataFilter(
+            subject = subject,
+            topic = topic,
+        )
+    else :
+        filter_arg = None
+
+    with st.spinner("正在知识库中检索相关讲义..."):
         try:
             chunks = retriever.retrieve(query=prompt, top_k=top_k, filter_=filter_arg)
         except Exception as exc:
@@ -116,8 +121,10 @@ if prompt := st.chat_input("输入你想问的问题（例如：什么是博弈�
             st.error(f"检索出错: {exc}")
 
 
-    # 🛡️ 兼容函数：安全获取任何形式的来源信息
     def get_chunk_source(c) -> str:
+        if hasattr(c, "chunk"):
+            c = c.chunk
+
         for attr in ["metadata", "meta", "source", "file_path"]:
             val = getattr(c, attr, None)
             if isinstance(val, dict):
@@ -126,16 +133,20 @@ if prompt := st.chat_input("输入你想问的问题（例如：什么是博弈�
                         return val[k]
             elif isinstance(val, str) and val:
                 return val
+
         return "未知来源"
 
 
-    # 🛡️ 兼容函数：安全获取任何形式的文本内容属性
     def get_chunk_content(c) -> str:
+        if hasattr(c, "chunk"):
+            c = c.chunk
+
         for attr in ["content", "text", "page_content", "body", "document"]:
             val = getattr(c, attr, None)
             if isinstance(val, str) and val:
                 return val
-        return str(c)
+
+        raise ValueError(f"无法从 {type(c).__name__} 获取文本内容")
 
 
     # 组装上下文

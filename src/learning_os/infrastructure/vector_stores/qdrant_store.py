@@ -80,6 +80,7 @@ class QdrantStore(VectorStore):
     ) -> None:
         self._collection_name = collection_name
         self._vector_size = vector_size
+        self._distance = distance
         self._host = host
         self._port = port
         self._location = location
@@ -227,17 +228,26 @@ class QdrantStore(VectorStore):
 
         from qdrant_client import models
 
+        distance_map = {
+            "Cosine": models.Distance.COSINE,
+            "Dot": models.Distance.DOT,
+            "Euclid": models.Distance.EUCLID,
+        }
+
+        distance = distance_map[self._distance]
+
         logger.info(
-            "Creating Qdrant collection '%s' (size=%d, distance=Cosine).",
+            "Creating Qdrant collection '%s' (size = %d, distance = %s).",
             self._collection_name,
             self._vector_size,
+            self._distance,
         )
         try:
             client.create_collection(
                 collection_name=self._collection_name,
-                vectors_config=models.VectorParams(
-                    size=self._vector_size,
-                    distance=models.Distance.COSINE,
+                vectors_config = models.VectorParams(
+                    size = self._vector_size,
+                    distance = distance,
                 ),
             )
         except Exception as exc:
