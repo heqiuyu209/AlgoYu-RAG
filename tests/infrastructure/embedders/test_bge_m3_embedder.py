@@ -27,7 +27,7 @@ def embedder() -> BGEM3Embedder:
 
 def _make_mock_model(dim: int = 1024) -> mock.MagicMock:
     model = mock.MagicMock()
-    model.get_sentence_embedding_dimension.return_value = dim
+    model.get_embedding_dimension.return_value = dim
     return model
 
 
