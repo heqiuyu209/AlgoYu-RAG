@@ -357,7 +357,7 @@ class LLM(ABC):
 
     V1 has two concrete implementations:
 
-    * :class:`~learning_os.infrastructure.llms.openai_compatible.OpenAICompatibleLLM`
+    * :class:`~learning_os.infrastructure.llms.openai_compatible_llm.OpenAICompatibleLLM`
       — covers DeepSeek, OpenRouter, vLLM, SiliconFlow, Ollama, etc.
     * :class:`~learning_os.infrastructure.llms.anthropic_llm.AnthropicLLM`
       — native Anthropic Messages API.

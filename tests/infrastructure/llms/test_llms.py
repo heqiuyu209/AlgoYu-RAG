@@ -14,7 +14,7 @@ from learning_os.domain.exceptions import (
 )
 from learning_os.domain.interfaces import Message
 from learning_os.infrastructure.llms.anthropic_llm import AnthropicLLM
-from learning_os.infrastructure.llms.openai_compatible import OpenAICompatibleLLM
+from learning_os.infrastructure.llms.openai_compatible_llm import OpenAICompatibleLLM
 
 
 # ══════════════════════════════════════════════════════════════════════

@@ -1,5 +1,8 @@
 import logging
+import math
 from pathlib import Path
+
+from learning_os.domain import Chunk, EmbeddingError, ChunkingError
 from learning_os.domain.interfaces import Parser, Chunker, Embedder, VectorStore, Cleaner
 
 logger = logging.getLogger(__name__)
@@ -67,16 +70,73 @@ class IngestPipeline:
         if self.cleaner:
             document.content = self.cleaner.clean(document.content)
 
+        # 检查正文是否为空
+        if not document.content.strip():
+            logger.info(f"文件 {path.name} 没有有效正文，跳过。")
+            return 0
+
         # 3. 分块 (Chunk)
         chunks = self.chunker.chunk(document)
+
+        # 分块器返回列表
+        if not isinstance(chunks, list):
+            raise ChunkingError("Chunker must return a list of chunks.")
+
+        # 前面确认非空，却没有产生chunk，抛出异常
         if not chunks:
-            logger.warning("未生成任何文本块。")
-            return 0
+            raise ChunkingError(
+                "Non-empty document produced no chunks."
+            )
+
+        # 检查每个 Chunk 的正文
+        for index, chunk in enumerate(chunks):
+            # 1. 检查对象是不是 Chunk
+            if not isinstance(chunk, Chunk):
+                raise ChunkingError(
+                    f"Chunk {index} must be a Chunk object."
+                )
+
+            # 2. 检查正文是不是字符串
+            if not isinstance(chunk.content, str):
+                raise ChunkingError(
+                    f"Chunk {index} content must be a string."
+                )
+
+            if not chunk.content.strip():
+                raise ChunkingError(
+                    f"Chunk {index} has empty content."
+                )
 
         # 4. 向量化 (Embed)
         # 提取出所有文本，一次性交给 embedder 处理（批处理速度更快）
         texts = [chunk.content for chunk in chunks]
         embeddings = self.embedder.embed(texts)
+
+        # 检查返回类型
+        if not isinstance(embeddings, list):
+            raise EmbeddingError("Embedder must return a list of vectors.")
+
+        # 检查 Chunk 和 向量 数量
+        if len(embeddings) != len(chunks):
+            raise EmbeddingError(
+                f"Embedding count mismatch: expected {len(chunks)}, "
+                f"got {len(embeddings)}."
+            )
+
+        # 检查非法向量
+        for index, vector in enumerate(embeddings):
+            if not isinstance(vector, list):
+                raise EmbeddingError(f"Vector {index} must be a list.")
+
+            if len(vector) != self.embedder.dimension:
+                raise EmbeddingError(f"Vector {index} has an invalid dimension.")
+
+            for value in vector:
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
+                    raise EmbeddingError(f"Vector {index} contains a non-numeric value.")
+
+                if not math.isfinite(value):
+                    raise EmbeddingError(f"Vector {index} contains NaN or infinity.")
 
         # 把算好的向量塞回 chunk 对象里
         for chunk, emb in zip(chunks, embeddings):

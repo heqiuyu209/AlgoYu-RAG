@@ -248,29 +248,49 @@ learning-os/
 │       │   ├── interfaces.py      # All ABCs + Message + MetadataFilter
 │       │   └── exceptions.py      # LearningOSError + 13 subclasses
 │       ├── application/
+│       │   └── ingest_pipeline.py # Parse → clean → chunk → embed → store
 │       ├── infrastructure/
-│       │   ├── config.py          # YAML config loader
-│       │   ├── logging_.py        # Unified logging
+│       │   ├── config_loader.py   # YAML config loader
+│       │   ├── logging_config.py  # Unified logging configuration
 │       │   ├── container.py       # DI container
-│       │   ├── parsers/           # Plugin: markdown (pdf/docx/pptx future)
-│       │   ├── chunkers/          # Plugin: recursive
-│       │   ├── embedders/         # Plugin: bge-m3
-│       │   ├── vector_stores/     # Plugin: qdrant
-│       │   ├── retrievers/        # Plugin: vector
-│       │   └── llms/              # Plugin: openai-compatible, anthropic
+│       │   ├── parsers/
+│       │   │   ├── markdown_parser.py
+│       │   │   └── registry.py
+│       │   ├── cleaners/
+│       │   │   ├── markdown_cleaner.py
+│       │   │   └── registry.py
+│       │   ├── chunkers/
+│       │   │   ├── recursive_chunker.py
+│       │   │   └── registry.py
+│       │   ├── embedders/
+│       │   │   ├── bge_m3_embedder.py
+│       │   │   └── registry.py
+│       │   ├── vector_stores/
+│       │   │   ├── qdrant_store.py
+│       │   │   └── registry.py
+│       │   ├── retrievers/
+│       │   │   ├── vector_retriever.py
+│       │   │   └── registry.py
+│       │   └── llms/
+│       │       ├── openai_compatible_llm.py
+│       │       ├── anthropic_llm.py
+│       │       └── registry.py
 │       └── cli/
 │           └── main.py            # Typer CLI
-└── tests/
-    ├── domain/                    # 35 tests
-    ├── infrastructure/
-    │   ├── parsers/               # 23 tests
-    │   ├── chunkers/              # 12 tests
-    │   ├── embedders/             # 17 tests
-    │   ├── vector_stores/         # 16 tests
-    │   ├── retrievers/            # 11 tests
-    │   └── llms/                  # 15 tests
-    ├── e2e/                       # 6 tests
-    └── benchmarks/                # run.py
+├── tests/
+│   ├── domain/                    # Models, contracts, and exceptions
+│   ├── infrastructure/
+│   │   ├── test_container.py      # Configuration-driven assembly
+│   │   ├── parsers/
+│   │   ├── chunkers/
+│   │   ├── embedders/
+│   │   ├── vector_stores/
+│   │   ├── retrievers/
+│   │   └── llms/
+│   ├── e2e/                       # Component flow, real pipeline, and CLI
+│   └── benchmarks/                # run.py
+└── web/
+    └── app.py                     # Streamlit entry point
 ```
 
 ---
@@ -288,7 +308,7 @@ cp config.yaml.example config.yaml
 ### 8.2 Running Tests
 
 ```bash
-pytest                          # all 135 tests
+pytest                          # all tests
 pytest tests/domain/            # domain only
 pytest tests/e2e/               # E2E only
 python tests/benchmarks/run.py  # benchmarks
@@ -312,6 +332,25 @@ For testing: use `location: ":memory:"` in config (no server needed).
 # Docker Qdrant
 docker run -p 6333:6333 qdrant/qdrant
 ```
+
+### 8.5 Naming Conventions
+
+- Packages, modules, functions, methods, and variables use `snake_case`.
+  Classes use `PascalCase`; constants and registry mappings use `UPPER_SNAKE_CASE`.
+- A concrete component module includes its role: `markdown_parser.py`,
+  `markdown_cleaner.py`, `recursive_chunker.py`, `bge_m3_embedder.py`,
+  `qdrant_store.py`, `vector_retriever.py`, and `openai_compatible_llm.py`.
+  Keep established provider/model names and acronyms in class names, such as
+  `OpenAICompatibleLLM` and `BGEM3Embedder`.
+- Shared modules retain conventional names: `models.py`, `interfaces.py`,
+  `exceptions.py`, `container.py`, and each plugin package's `registry.py`.
+  Entry points remain `cli/main.py` and `web/app.py`.
+- Tests mirror the implementation layers and use `test_<component>.py`.
+  A suite covering several related components may use a plural name such as
+  `test_llms.py`; scenario tests live under `tests/e2e/`.
+- Module renames must update imports, documentation, and string-based patch
+  targets together. Configuration keys and plugin type strings are separate
+  public contracts and are not renamed to match Python filenames.
 
 ---
 

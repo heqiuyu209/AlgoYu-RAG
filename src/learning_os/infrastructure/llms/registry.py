@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from learning_os.domain.interfaces import LLM
 from learning_os.infrastructure.llms.anthropic_llm import AnthropicLLM
-from learning_os.infrastructure.llms.openai_compatible import OpenAICompatibleLLM
+from learning_os.infrastructure.llms.openai_compatible_llm import OpenAICompatibleLLM
 
 LLM_REGISTRY: dict[str, type[LLM]] = {
     "anthropic": AnthropicLLM,

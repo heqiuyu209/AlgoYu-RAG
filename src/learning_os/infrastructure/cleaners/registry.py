@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Type
 from learning_os.domain.interfaces import Cleaner
-from learning_os.infrastructure.cleaners.md_cleaner import MarkdownCleaner
+from learning_os.infrastructure.cleaners.markdown_cleaner import MarkdownCleaner
 
 # 注册表：将 config.yaml 中的名字，映射到对应的类
 CLEANER_REGISTRY: dict[str, Type[Cleaner] | None] = {

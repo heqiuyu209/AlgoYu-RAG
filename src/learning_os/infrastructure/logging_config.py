@@ -8,7 +8,7 @@ module and call ``logging.getLogger(__name__)``.
 
 Usage::
 
-    from learning_os.infrastructure.logging_ import setup_logging
+    from learning_os.infrastructure.logging_config import setup_logging
     setup_logging(config_dict)
 """
 

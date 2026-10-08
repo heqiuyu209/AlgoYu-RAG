@@ -134,7 +134,12 @@ class BGEM3Embedder(Embedder):
                 f"Failed to load model '{self._model_name}': {exc}"
             ) from exc
 
-        actual_dim = model.get_embedding_dimension()
+        # sentence-transformers renamed this method in newer releases.
+        # Keep compatibility with the older versions allowed by pyproject.toml.
+        get_dimension = getattr(model, "get_embedding_dimension", None)
+        if get_dimension is None:
+            get_dimension = model.get_sentence_embedding_dimension
+        actual_dim = get_dimension()
 
         if actual_dim is None:
             raise EmbeddingError(

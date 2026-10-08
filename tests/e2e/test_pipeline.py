@@ -28,7 +28,7 @@ from learning_os.domain.exceptions import RetrievalError
 from learning_os.domain.interfaces import Message, MetadataFilter
 from learning_os.domain.models import Chunk, ChunkMetadata, SearchResult
 from learning_os.infrastructure.chunkers.recursive_chunker import RecursiveChunker
-from learning_os.infrastructure.llms.openai_compatible import OpenAICompatibleLLM
+from learning_os.infrastructure.llms.openai_compatible_llm import OpenAICompatibleLLM
 from learning_os.infrastructure.parsers.markdown_parser import MarkdownParser
 from learning_os.infrastructure.retrievers.vector_retriever import (
     VectorRetriever,

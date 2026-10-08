@@ -92,6 +92,35 @@ class TestDimension:
             embedder.embed(["x"])
         assert embedder.dimension == 1024
 
+    @pytest.mark.parametrize(
+        "dimension_method",
+        ["get_embedding_dimension", "get_sentence_embedding_dimension"],
+    )
+    @pytest.mark.parametrize("dimension", [1024, None, 768])
+    def test_loader_validates_dimension_with_both_library_apis(
+        self, embedder: BGEM3Embedder, dimension_method: str, dimension: int | None
+    ) -> None:
+        # A strict spec prevents MagicMock from inventing the newer API on
+        # models from older supported sentence-transformers releases.
+        model = mock.Mock(spec=[dimension_method])
+        getattr(model, dimension_method).return_value = dimension
+        st_module = mock.Mock()
+        st_module.SentenceTransformer.return_value = model
+
+        with mock.patch.dict("sys.modules", {"sentence_transformers": st_module}):
+            if dimension == 1024:
+                assert embedder._load_model() is model
+            else:
+                message = (
+                    "Could not determine dimension"
+                    if dimension is None
+                    else "requires 1024"
+                )
+                with pytest.raises(EmbeddingError, match=message):
+                    embedder._load_model()
+
+        getattr(model, dimension_method).assert_called_once_with()
+
 
 # ══════════════════════════════════════════════════════════════════════
 # embed

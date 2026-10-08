@@ -15,16 +15,15 @@ Commands::
 
 from __future__ import annotations
 
-import chunk
 import logging
 from pathlib import Path
 
 import typer
 import yaml
 
-from learning_os.infrastructure.config import load_config
+from learning_os.infrastructure.config_loader import load_config
 from learning_os.infrastructure.container import Container
-from learning_os.infrastructure.logging_ import setup_logging
+from learning_os.infrastructure.logging_config import setup_logging
 
 # ── registry imports (side-effect: populate global registry dicts) ──
 import learning_os.infrastructure.parsers.registry  # noqa: F401
@@ -127,7 +126,6 @@ def ingest(
     except Exception as e:
         typer.echo(f"❌ Pipeline initialization failed: {e}", err=True)
         raise typer.Exit(1)
-
 
     # 准备 Parser 路由表
     import learning_os.infrastructure.parsers.registry as pr

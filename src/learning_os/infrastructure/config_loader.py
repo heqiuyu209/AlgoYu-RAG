@@ -7,7 +7,7 @@ no global config object.
 
 Usage::
 
-    from learning_os.infrastructure.config import load_config
+    from learning_os.infrastructure.config_loader import load_config
     cfg = load_config()
     data_dir = cfg["learning_os"]["paths"]["data_dir"]
 """

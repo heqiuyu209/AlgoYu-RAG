@@ -27,7 +27,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from learning_os.infrastructure.config import load_config
+from learning_os.domain.exceptions import ConfigurationError
+from learning_os.infrastructure.config_loader import load_config
 
 # ── Plugin registries (populated as modules are imported) ──
 # Each is:  dict[str, type]
@@ -76,11 +77,12 @@ def _resolve(
         )
 
     kwargs = {k: v for k, v in cfg.items() if k != "type"}
-    # Resolve "api_key_env" to the actual environment variable value.
+    # An explicit key wins; use the environment only as a fallback.
     if "api_key_env" in kwargs:
         import os
         env_name: str = kwargs.pop("api_key_env")
-        kwargs["api_key"] = os.environ.get(env_name, "")
+        if not kwargs.get("api_key"):
+            kwargs["api_key"] = os.environ.get(env_name, "")
 
     safe_kwargs = kwargs.copy()
 
@@ -162,10 +164,19 @@ class Container:
         return self._cfg
 
     def ingest_pipeline(self):
-        from learning_os.application.ingest import IngestPipeline
+        from learning_os.application.ingest_pipeline import IngestPipeline
         from learning_os.infrastructure.parsers.registry import PARSER_REGISTRY
 
-        parsers = [cls() for cls in PARSER_REGISTRY.values()]
+        parser_cfg = self._cfg.get("parser", {"type": "auto"})
+        if parser_cfg.get("type", "auto") == "auto":
+            parsers = [cls() for cls in PARSER_REGISTRY.values()]
+        else:
+            parser = _resolve(PARSER_REGISTRY, parser_cfg, "parser")
+            if parser is None:
+                raise ConfigurationError(
+                    "Ingestion requires a parser: use 'auto' or a registered parser type."
+                )
+            parsers = [parser]
 
         return IngestPipeline(
             parsers = parsers,
