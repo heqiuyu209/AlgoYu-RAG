@@ -166,6 +166,36 @@ def test_pipeline_reingest_is_idempotent(pipeline, tmp_path):
     assert len(pipeline.embedder.batches) == 2
 
 
+def test_pipeline_replaces_modified_file(pipeline, tmp_path):
+    """Updating the same path must remove all chunks of its older version."""
+    path = tmp_path / "note.md"
+    path.write_text(
+        "Old paragraph about sorting. " * 12,
+        encoding="utf-8",
+    )
+    old_count = pipeline.run(path)
+    assert old_count > 1
+
+    source = str(path.resolve())
+    old_chunks = pipeline.store.search(
+        [1.0, 0.0, 0.0], top_k=100, filter_={"source": source},
+    )
+    old_ids = {chunk.id for chunk in old_chunks}
+    assert len(old_ids) == old_count
+
+    # Reuse the source path; a new filename would represent another document.
+    path.write_text("New graph note.", encoding="utf-8")
+    assert pipeline.run(path) == 1
+
+    current = pipeline.store.search(
+        [0.0, 1.0, 0.0], top_k=100, filter_={"source": source},
+    )
+    assert len(current) == 1
+    assert current[0].content == "New graph note."
+    assert current[0].id not in old_ids
+    assert pipeline.store.count() == 1
+
+
 @pytest.mark.parametrize("name", ["empty.md", "unsupported.txt"])
 def test_empty_or_unsupported_file_never_reaches_embedder(pipeline, tmp_path, name):
     path = tmp_path / name

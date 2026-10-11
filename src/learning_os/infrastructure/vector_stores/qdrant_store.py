@@ -125,6 +125,83 @@ class QdrantStore(VectorStore):
 
         logger.debug("Stored %d chunks in '%s'.", len(chunks), self._collection_name)
 
+    def replace_source(self, source: str, chunks: list[Chunk]) -> None:
+        # 防止来源为空或误传空列表，造成错误清理。
+        if not isinstance(source, str) or not source.strip():
+            raise VectorStoreError("Source must be a non-empty string.")
+
+        if not isinstance(chunks, list) or not chunks:
+            raise VectorStoreError(
+                "Replacement chunks must be a non-empty list."
+            )
+
+        # 确认所有新块都属于目标来源。
+        for index, chunk in enumerate(chunks):
+            if not isinstance(chunk, Chunk) or not isinstance(
+                chunk.metadata, ChunkMetadata
+            ):
+                raise VectorStoreError(
+                    f"Invalid replacement chunk at index {index}."
+                )
+
+            if chunk.metadata.source != source:
+                raise VectorStoreError(
+                    f"Chunk {index} belongs to a different source."
+                )
+
+        # 一次替换不能混入多个文档版本。
+        if len({chunk.document_id for chunk in chunks}) != 1:
+            raise VectorStoreError(
+                "Replacement chunks must belong to one document version."
+            )
+
+        from qdrant_client import models
+
+        # Qdrant 使用 UUID 点 ID，不是完整的 Chunk 哈希。
+        try:
+            keep_ids = [
+                str(_chunk_id_to_uuid(chunk.id))
+                for chunk in chunks
+            ]
+        except (TypeError, ValueError) as exc:
+            raise VectorStoreError(
+                "Replacement contains an invalid chunk ID."
+            ) from exc
+
+        if len(set(keep_ids)) != len(keep_ids):
+            raise VectorStoreError(
+                "Replacement contains duplicate point IDs."
+            )
+
+        # 要删除的记录：来源相同，且不属于本次新块。
+        selector = models.FilterSelector(
+            filter=models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="source",
+                        match=models.MatchValue(value=source),
+                    )
+                ],
+                must_not=[
+                    models.HasIdCondition(has_id=keep_ids)
+                ],
+            )
+        )
+
+        # 必须全部保存成功，才能进入下面的清理步骤。
+        self.store(chunks)
+
+        try:
+            self._get_client().delete(
+                collection_name=self._collection_name,
+                points_selector=selector,
+                wait=True,
+            )
+        except Exception as exc:
+            raise VectorStoreError(
+                f"Failed to clean old chunks for source '{source}': {exc}"
+            ) from exc
+
     def search(
         self,
         query_vector: list[float],

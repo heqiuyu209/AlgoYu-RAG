@@ -194,6 +194,14 @@ class VectorStore(ABC):
         ...
 
     @abstractmethod
+    def replace_source(
+            self,
+            source: str,
+            chunks: list[Chunk],
+    ) -> None:
+        """Save the new chunks, clear existing chunks."""
+
+    @abstractmethod
     def search(
         self,
         query_vector: list[float],

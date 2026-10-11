@@ -69,6 +69,7 @@ def test_empty_document_skips_all_downstream_steps(components, document, content
     chunker.chunk.assert_not_called()
     embedder.embed.assert_not_called()
     store.store.assert_not_called()
+    store.replace_source.assert_not_called()
 
 
 def test_cleaning_to_empty_skips_all_downstream_steps(components, document):
@@ -84,6 +85,7 @@ def test_cleaning_to_empty_skips_all_downstream_steps(components, document):
     chunker.chunk.assert_not_called()
     embedder.embed.assert_not_called()
     store.store.assert_not_called()
+    store.replace_source.assert_not_called()
 
 
 @pytest.mark.parametrize("result", [None, ()], ids=["none", "tuple"])
@@ -96,6 +98,7 @@ def test_chunker_must_return_a_list(components, result):
 
     embedder.embed.assert_not_called()
     store.store.assert_not_called()
+    store.replace_source.assert_not_called()
 
 
 def test_nonempty_document_requires_chunks(components):
@@ -107,6 +110,7 @@ def test_nonempty_document_requires_chunks(components):
 
     embedder.embed.assert_not_called()
     store.store.assert_not_called()
+    store.replace_source.assert_not_called()
 
 
 def test_chunk_entries_must_be_chunk_objects(components):
@@ -118,6 +122,7 @@ def test_chunk_entries_must_be_chunk_objects(components):
 
     embedder.embed.assert_not_called()
     store.store.assert_not_called()
+    store.replace_source.assert_not_called()
 
 
 @pytest.mark.parametrize("content", [None, 123], ids=["none", "integer"])
@@ -131,6 +136,7 @@ def test_chunk_content_must_be_a_string(components, content):
 
     embedder.embed.assert_not_called()
     store.store.assert_not_called()
+    store.replace_source.assert_not_called()
 
 
 @pytest.mark.parametrize("content", ["", " \n\t "], ids=["empty", "whitespace"])
@@ -143,6 +149,7 @@ def test_blank_chunk_is_rejected_before_embedding(components, content):
 
     embedder.embed.assert_not_called()
     store.store.assert_not_called()
+    store.replace_source.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -196,6 +203,7 @@ def test_invalid_embeddings_are_not_paired_or_stored(components, result, message
     embedder.embed.assert_called_once_with(["A", "B"])
     assert all(chunk.embedding is None for chunk in chunks)
     store.store.assert_not_called()
+    store.replace_source.assert_not_called()
 
 
 def test_valid_chunks_are_embedded_paired_and_stored(components):
@@ -207,4 +215,5 @@ def test_valid_chunks_are_embedded_paired_and_stored(components):
     embedder.embed.assert_called_once_with(["A", "B"])
     assert chunks[0].embedding == _VECTOR_A
     assert chunks[1].embedding == _VECTOR_B
-    store.store.assert_called_once_with(chunks)
+    store.replace_source.assert_called_once_with("note.md", chunks)
+    store.store.assert_not_called()

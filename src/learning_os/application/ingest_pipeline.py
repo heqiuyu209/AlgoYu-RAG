@@ -143,7 +143,8 @@ class IngestPipeline:
             chunk.embedding = emb
 
         # 5. 存储 (Store)
-        self.store.store(chunks)
+        source = str(document.source_path)
+        self.store.replace_source(source, chunks)
 
         logger.info(f"✅ 文件 {path.name} 处理完毕，共入库 {len(chunks)} 个 Chunk。")
         return len(chunks)

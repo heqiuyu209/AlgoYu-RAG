@@ -8,6 +8,7 @@ operations.
 from __future__ import annotations
 
 import uuid
+from unittest import mock
 
 import pytest
 
@@ -66,6 +67,17 @@ def _chunk(
         metadata=_meta(idx),
         embedding=list(embedding) if embedding is not None else None,
     )
+
+
+@pytest.fixture
+def replacement_store():
+    """Give each replacement test a separate, properly closed memory store."""
+    store = _store()
+    try:
+        yield store
+    finally:
+        if store._client is not None:
+            store._client.close()
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -161,6 +173,100 @@ class TestStore:
         store.store([second])
 
         assert store.count() == 1
+
+
+# ══════════════════════════════════════════════════════════════════════
+# replace_source
+# ══════════════════════════════════════════════════════════════════════
+
+
+class TestReplaceSource:
+    def test_removes_old_chunks_and_preserves_other_sources(
+        self, replacement_store: QdrantStore,
+    ) -> None:
+        store = replacement_store
+        old_chunks = [
+            _chunk("v1", idx=i, content=f"old-{i}")
+            for i in range(3)
+        ]
+        # Same version and content at a different source must stay untouched.
+        other = Chunk(
+            id="",
+            document_id="v1",
+            content="old-0",
+            metadata=_meta(source="other.md"),
+            embedding=list(_VEC1024),
+        )
+        store.store([*old_chunks, other])
+        assert store.count() == 4
+
+        new = _chunk("v2", content="new content")
+        store.replace_source("test.md", [new])
+
+        current = store.search(
+            _VEC1024, top_k=10, filter_={"source": "test.md"},
+        )
+        assert [chunk.id for chunk in current] == [new.id]
+        assert current[0].content == "new content"
+        assert current[0].document_id == "v2"
+
+        untouched = store.search(
+            _VEC1024, top_k=10, filter_={"source": "other.md"},
+        )
+        assert [chunk.id for chunk in untouched] == [other.id]
+        assert untouched[0].content == "old-0"
+        assert store.count() == 2
+
+        # Replacing with the same chunks must not create duplicates.
+        store.replace_source("test.md", [new])
+        assert store.count() == 2
+        current = store.search(
+            _VEC1024, top_k=10, filter_={"source": "test.md"},
+        )
+        assert [chunk.id for chunk in current] == [new.id]
+
+    def test_write_failure_does_not_delete(
+        self, replacement_store: QdrantStore,
+    ) -> None:
+        store = replacement_store
+        old = _chunk("v1", content="old content")
+        store.store([old])
+        new = _chunk("v2", content="new content")
+        client = store._get_client()
+
+        # Failure before writing must never proceed to old-chunk cleanup.
+        with mock.patch.object(
+            store, "store", side_effect=VectorStoreError("write failed"),
+        ), mock.patch.object(client, "delete") as delete:
+            with pytest.raises(VectorStoreError, match="write failed"):
+                store.replace_source("test.md", [new])
+            delete.assert_not_called()
+
+        assert store.count() == 1
+        assert store.search(_VEC1024, top_k=10)[0].id == old.id
+
+    def test_cleanup_failure_is_reported(
+        self, replacement_store: QdrantStore,
+    ) -> None:
+        store = replacement_store
+        old = _chunk("v1", content="old content")
+        store.store([old])
+        new = _chunk("v2", content="new content")
+        client = store._get_client()
+
+        with mock.patch.object(
+            client, "delete", side_effect=RuntimeError("delete failed"),
+        ) as delete:
+            with pytest.raises(
+                VectorStoreError, match="Failed to clean old chunks",
+            ):
+                store.replace_source("test.md", [new])
+            delete.assert_called_once()
+
+        # Replacement is not transactional: cleanup failure leaves both versions.
+        remaining = store.search(_VEC1024, top_k=10)
+        assert {chunk.id for chunk in remaining} == {old.id, new.id}
+
 
 # ══════════════════════════════════════════════════════════════════════
 # search
