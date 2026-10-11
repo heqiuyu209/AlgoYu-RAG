@@ -11,9 +11,12 @@ and the same document/chunk produces the same ID across runs.
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+
+from numpy.ma.core import identity
 
 
 def _content_hash(text: str) -> str:
@@ -166,8 +169,8 @@ class Chunk:
     """
 
     id: str
-    """SHA-256 of ``content``, used as the chunk's unique identifier.
-    Derived automatically when not supplied."""
+    """Deterministic ID derived from source, document version,
+    chunk position and content. Generated when not supplied."""
 
     document_id: str
     """Foreign key back to :attr:`Document.id`."""
@@ -185,12 +188,22 @@ class Chunk:
     score: float | None = None
 
     def __post_init__(self) -> None:
-        # Derive content hash if the caller left it empty.
-        if not self.id:
-            self.id = _content_hash(self.content)
-        # Keep metadata.content_hash in sync.
+        content_hash = _content_hash(self.content)
         if not self.metadata.content_hash:
-            self.metadata.content_hash = self.id
+            self.metadata.content_hash = content_hash
+
+        if not self.id:
+            identity = json.dumps(
+                [
+                    self.metadata.source,
+                    self.document_id,
+                    self.metadata.chunk_index,
+                    content_hash,
+                ],
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            self.id = _content_hash(identity)
 
 
 # ══════════════════════════════════════════════════════════════════════

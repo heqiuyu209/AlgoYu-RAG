@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -126,7 +127,19 @@ class TestChunk:
             content="The quick brown fox",
             metadata=self._meta(),
         )
-        assert c.id == _content_hash("The quick brown fox")
+
+        expected_identity = json.dumps(
+            [
+                "test.pdf",
+                "doc-1",
+                0,
+                _content_hash("The quick brown fox"),
+            ],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+
+        assert c.id == _content_hash(expected_identity)
 
     def test_explicit_id_preserved(self) -> None:
         c = Chunk(
@@ -144,7 +157,8 @@ class TestChunk:
             content="sync test",
             metadata=self._meta(),
         )
-        assert c.metadata.content_hash == c.id == _content_hash("sync test")
+        assert c.metadata.content_hash == _content_hash("sync test")
+        # assert c.metadata.content_hash == c.id == _content_hash("sync test")
 
     def test_metadata_hash_preserved_if_already_set(self) -> None:
         m = self._meta(content_hash="pre-set")
@@ -171,7 +185,7 @@ class TestChunk:
         )
         assert c.embedding is vec
 
-    def test_same_content_produces_same_id(self) -> None:
+    def test_same_identity_produces_same_id(self) -> None:
         a = Chunk(id="", document_id="d", content="same", metadata=self._meta())
         b = Chunk(id="", document_id="d", content="same", metadata=self._meta())
         assert a.id == b.id
@@ -180,3 +194,39 @@ class TestChunk:
         a = Chunk(id="", document_id="d", content="A", metadata=self._meta())
         b = Chunk(id="", document_id="d", content="B", metadata=self._meta())
         assert a.id != b.id
+
+    @pytest.mark.parametrize(
+        "source, document_id, chunk_index",
+        [
+            ("other.pdf", "d", 0),
+            ("test.pdf", "other-document", 0),
+            ("test.pdf", "d", 1),
+        ],
+        ids = ["different-source", "different-document", "different-chunk"],
+
+    )
+    def test_same_content_different_identity_has_different_id(
+        self,
+        source: str,
+        document_id: str,
+        chunk_index: int,
+    ) -> None:
+        a = Chunk(
+            id = "",
+            document_id = "d",
+            content = "same",
+            metadata = self._meta(),
+        )
+
+        b = Chunk(
+            id = "",
+            document_id = document_id,
+            content = "same",
+            metadata = self._meta(
+                source = source,
+                chunk_index = chunk_index,
+            ),
+        )
+
+        assert a.id != b.id
+        assert a.metadata.content_hash == b.metadata.content_hash

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from learning_os.domain.models import Document
+from learning_os.domain.models import Document, _content_hash
 from learning_os.infrastructure.chunkers.recursive_chunker import RecursiveChunker
 
 
@@ -246,7 +246,7 @@ class TestMetadataInheritance:
         chunks = chunker.chunk(_doc("unique text"))
         assert len(chunks) == 1
         # Chunk.__post_init__ syncs content_hash to Chunk.id
-        assert chunks[0].metadata.content_hash == chunks[0].id
+        assert chunks[0].metadata.content_hash == _content_hash(chunks[0].content)
         assert len(chunks[0].metadata.content_hash) == 64  # SHA-256
 
     def test_embedding_is_none(self) -> None:

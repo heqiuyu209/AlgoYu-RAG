@@ -13,7 +13,7 @@ All E2E scenarios:
 - Single-file ingest + search pipeline
 - Multi-file ingest + metadata filtering
 - Empty store / no results handling
-- Overwrite (re-ingest same file) idempotency
+- Re-ingest the same unchanged file without duplicate records
 """
 
 from __future__ import annotations
@@ -24,6 +24,7 @@ from unittest import mock
 
 import pytest
 
+from learning_os.application.ingest_pipeline import IngestPipeline
 from learning_os.domain.exceptions import RetrievalError
 from learning_os.domain.interfaces import Message, MetadataFilter
 from learning_os.domain.models import Chunk, ChunkMetadata, SearchResult
@@ -200,13 +201,28 @@ class TestE2EEdgeCases:
         retriever = VectorRetriever(embedder=_make_mock_embedder(), vector_store=store)
         assert retriever.retrieve("anything") == []
 
-    def test_reingest_overwrites_previous(self) -> None:
-        store = QdrantStore(location=":memory:", collection_name="e2e_overwrite")
-        text = "# Doc\n\nSome content."
-        p1 = _ingest_file(store, text)
-        assert store.count() == 1
-        p2 = _ingest_file(store, text)
-        # Same content → same chunk IDs → upsert, not duplicate.
-        assert store.count() == 1
-        p1.unlink(missing_ok=True)
-        p2.unlink(missing_ok=True)
+    def test_reingest_same_file_is_idempotent(self, tmp_path: Path) -> None:
+        """Re-ingesting one unchanged source must update, not duplicate it."""
+        path = tmp_path / "same.md"
+        path.write_text("# Doc\n\nSome content.", encoding="utf-8")
+
+        store = QdrantStore(location=":memory:", collection_name="e2e_reingest")
+        pipeline = IngestPipeline(
+            parsers=[MarkdownParser()],
+            chunker=RecursiveChunker(chunk_size=100, chunk_overlap=0),
+            embedder=_make_mock_embedder(),
+            vector_store=store,
+        )
+
+        try:
+            assert pipeline.run(path) == 1
+            assert store.count() == 1
+            first_id = store.search(_VEC1024, top_k=1)[0].id
+
+            # Reuse the exact same path and content, not a new temporary file.
+            assert pipeline.run(path) == 1
+            assert store.count() == 1
+            assert store.search(_VEC1024, top_k=1)[0].id == first_id
+        finally:
+            if store._client is not None:
+                store._client.close()

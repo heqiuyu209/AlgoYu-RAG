@@ -314,6 +314,21 @@ pytest tests/e2e/               # E2E only
 python tests/benchmarks/run.py  # benchmarks
 ```
 
+On Windows, use the project test runner if pytest cannot access its default
+temporary directory:
+
+```powershell
+.\scripts\run_tests.ps1
+# Optional: select the Python interpreter explicitly.
+.\scripts\run_tests.ps1 -PythonExecutable "C:\path\to\python.exe"
+```
+
+The runner uses a fresh, dedicated temporary directory for each invocation,
+disables bytecode and pytest cache writes, and returns pytest's exit code. It
+does not change system directory permissions or access the configured live
+vector database. Never pass a project or data directory to `--basetemp`, because
+pytest clears that directory before running tests.
+
 ### 8.3 Running the CLI
 
 ```bash

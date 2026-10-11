@@ -18,7 +18,6 @@ from learning_os.infrastructure.vector_stores.qdrant_store import (
 )
 from learning_os.domain.exceptions import VectorStoreError
 
-
 # ══════════════════════════════════════════════════════════════════════
 # helpers
 # ══════════════════════════════════════════════════════════════════════
@@ -123,6 +122,45 @@ class TestStore:
         with pytest.raises(VectorStoreError):
             s.store([_chunk(idx=0)])  # 1024-d vector → 768-d collection
 
+    def test_same_content_different_source_are_preserved(self) -> None:
+        a = Chunk(
+            id = "",
+            document_id = "same-document",
+            content = "same",
+            metadata=_meta(source = "a.md", subject = "A"),
+            embedding = list(_VEC1024),
+        )
+
+        b = Chunk(
+            id = "",
+            document_id = "same-document",
+            content = "same",
+            metadata = _meta(source="b.md", subject="B"),
+            embedding = list(_VEC1024),
+        )
+
+        store = _store(a)
+        store.store([b])
+
+        assert store.count() == 2
+        results_a = store.search(_VEC1024, filter_ = {"subject": "A"},)
+        results_b = store.search(_VEC1024, filter_ = {"subject": "B"},)
+
+        assert len(results_a) == 1
+        assert len(results_b) == 1
+        assert results_a[0].metadata.source == "a.md"
+        assert results_b[0].metadata.source == "b.md"
+
+    def test_reingesting_same_chunk_does_not_duplicate(self) -> None:
+        first = _chunk(content="same")
+        store = _store(first)
+
+        second = _chunk(content="same")
+
+        assert first.id == second.id
+        store.store([second])
+
+        assert store.count() == 1
 
 # ══════════════════════════════════════════════════════════════════════
 # search
