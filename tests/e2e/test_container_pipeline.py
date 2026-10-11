@@ -13,7 +13,7 @@ import yaml
 from typer.testing import CliRunner
 
 from learning_os.cli import main as cli
-from learning_os.domain.exceptions import EmbeddingError
+from learning_os.domain.exceptions import ChunkingError, EmbeddingError
 from learning_os.domain.interfaces import Embedder, MetadataFilter
 from learning_os.infrastructure import container as container_module
 from learning_os.infrastructure.chunkers.recursive_chunker import RecursiveChunker
@@ -194,6 +194,52 @@ def test_pipeline_replaces_modified_file(pipeline, tmp_path):
     assert current[0].content == "New graph note."
     assert current[0].id not in old_ids
     assert pipeline.store.count() == 1
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["a" * 64 + "\n\n" + "b" * 64, "a" * 64 + "\n\n", "\n\n" + "b" * 64],
+    ids=["paragraph-at-limit", "trailing-newlines", "leading-newlines"],
+)
+def test_pipeline_preserves_chunk_boundary_whitespace(pipeline, tmp_path, text):
+    # The cleaner is optional; chunking must preserve its own input without
+    # depending on the cleaner to strip boundary whitespace first.
+    pipeline.cleaner = None
+    path = tmp_path / "boundary.md"
+    path.write_text(text, encoding="utf-8")
+
+    count = pipeline.run(path)
+    chunks = pipeline.store.search([0.0, 0.0, 1.0], top_k=20)
+    chunks.sort(key=lambda ch: ch.metadata.chunk_index)
+
+    assert count == pipeline.store.count() == len(chunks)
+    assert "".join(ch.content for ch in chunks) == text
+    assert all(ch.content.strip() and len(ch.content) <= 64 for ch in chunks)
+    assert pipeline.embedder.batches == [[ch.content for ch in chunks]]
+
+
+def test_unrepresentable_whitespace_preserves_previous_version(pipeline, tmp_path):
+    pipeline.cleaner = None
+    path = tmp_path / "boundary.md"
+    path.write_text("Existing note.", encoding="utf-8")
+    assert pipeline.run(path) == 1
+    old = pipeline.store.search([0.0, 0.0, 1.0], top_k=1)[0]
+
+    path.write_text("a" + " " * 130 + "b", encoding="utf-8")
+    with mock.patch.object(
+        pipeline.embedder, "embed", wraps=pipeline.embedder.embed,
+    ) as embed, mock.patch.object(
+        pipeline.store, "replace_source", wraps=pipeline.store.replace_source,
+    ) as replace:
+        with pytest.raises(ChunkingError, match="Whitespace span"):
+            pipeline.run(path)
+        embed.assert_not_called()
+        replace.assert_not_called()
+
+    remaining = pipeline.store.search([0.0, 0.0, 1.0], top_k=20)
+    assert pipeline.store.count() == 1
+    assert [ch.id for ch in remaining] == [old.id]
+    assert remaining[0].content == "Existing note."
 
 
 @pytest.mark.parametrize("name", ["empty.md", "unsupported.txt"])

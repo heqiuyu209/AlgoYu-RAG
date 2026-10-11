@@ -329,6 +329,15 @@ does not change system directory permissions or access the configured live
 vector database. Never pass a project or data directory to `--basetemp`, because
 pytest clears that directory before running tests.
 
+Chunking regression tests preserve spaces, punctuation, and line breaks: with
+zero overlap, concatenating chunk contents must reproduce the chunker's input
+exactly. Boundary whitespace is rebalanced into non-empty source slices; overlap
+may be reduced to respect the size limit. If a whitespace span cannot satisfy
+all three constraints (complete text, bounded size, non-empty chunks), ingestion
+raises `ChunkingError` before embedding or replacing stored data. Normalize such
+input explicitly in a cleaner or increase the chunk size; the chunker does not
+silently discard characters.
+
 ### 8.3 Running the CLI
 
 ```bash
