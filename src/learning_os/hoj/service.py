@@ -50,7 +50,12 @@ def create_app(index: KnowledgeIndex, auth: RequestAuth, video: VideoExtractor |
         try:
             yield
         finally:
-            index.client.close()
+            try:
+                index.client.close()
+            finally:
+                close = getattr(index.embedder, 'close', None)
+                if callable(close):
+                    close()
 
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     # At most one HTTP ingestion can occupy a worker slot. Reserve the other
@@ -171,6 +176,14 @@ def from_env() -> FastAPI:
     retrieval_mode = os.environ.get("HOJ_RAG_RETRIEVAL_MODE", "dense")
     if retrieval_mode not in {"dense", "hybrid"}:
         raise ValueError("HOJ_RAG_RETRIEVAL_MODE must be dense or hybrid")
+    embed_engine = os.environ.get("HOJ_RAG_EMBED_ENGINE", "pytorch")
+    embed_graph = os.environ.get("HOJ_RAG_EMBED_GRAPH_PATH", "")
+    if embed_engine not in {"pytorch", "onnx"}:
+        raise ValueError("HOJ_RAG_EMBED_ENGINE must be pytorch or onnx")
+    if embed_engine == "onnx" and (not embed_graph or os.environ.get("HOJ_RAG_DEVICE", "cpu") != "cpu"):
+        raise ValueError("ONNX embedding requires a local graph and cpu device")
+    if embed_graph and embed_engine != "onnx":
+        raise ValueError("HOJ_RAG_EMBED_GRAPH_PATH requires the onnx embedding engine")
     rerank_path = os.environ.get("HOJ_RAG_RERANK_MODEL_PATH", "")
     rerank_engine = os.environ.get("HOJ_RAG_RERANK_ENGINE", "pytorch")
     graph_path = os.environ.get("HOJ_RAG_RERANK_GRAPH_PATH", "")
@@ -205,16 +218,21 @@ def from_env() -> FastAPI:
         else:
             from learning_os.hoj.reranker import PassageReranker
             reranker = PassageReranker(Path(rerank_path).resolve())
-    embedder = BGEM3Embedder(model_name=str(model), device=os.environ.get("HOJ_RAG_DEVICE", "cpu"), batch_size=8)
-    # A cold model load must finish before the service accepts timed requests.
-    embedder.embed_query("算法学习")
-    if reranker is not None:
-        from learning_os.hoj.auth import now_ms
-        from learning_os.hoj.runtime import inference_owner
-        reranker.score("What is a prefix sum?", ["A prefix sum accumulates an array."],
-                       now_ms() + 120000, inference_owner(embedder))
-    client = QdrantClient(path=str(directory / "qdrant"))
+    if embed_engine == "onnx":
+        from learning_os.hoj.onnx_embedder import OnnxBGEM3Embedder
+        embedder = OnnxBGEM3Embedder(model, Path(embed_graph).absolute())
+    else:
+        embedder = BGEM3Embedder(model_name=str(model), device=os.environ.get("HOJ_RAG_DEVICE", "cpu"), batch_size=8)
+    client = None
     try:
+        # A cold model load must finish before the service accepts timed requests.
+        embedder.embed_query("算法学习")
+        if reranker is not None:
+            from learning_os.hoj.auth import now_ms
+            from learning_os.hoj.runtime import inference_owner
+            reranker.score("What is a prefix sum?", ["A prefix sum accumulates an array."],
+                           now_ms() + 120000, inference_owner(embedder))
+        client = QdrantClient(path=str(directory / "qdrant"))
         if context_projection == "1":
             from learning_os.hoj.dual_index import ContextIndex, CONTEXT_PROJECTION_REVISION
             from learning_os.hoj.paired_index import PairedKnowledgeIndex
@@ -228,5 +246,11 @@ def from_env() -> FastAPI:
                 retrieval_mode=retrieval_mode, reranker=reranker)
         return create_app(index, auth)
     except BaseException:
-        client.close()
+        try:
+            if client is not None:
+                client.close()
+        finally:
+            close = getattr(embedder, 'close', None)
+            if callable(close):
+                close()
         raise

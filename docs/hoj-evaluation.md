@@ -1,5 +1,31 @@
 # HOJ 知识库检索质量
 
+## 最新：同模型 BGE-M3 ONNX 编码（2026-10-27，组件与封装通过，未部署）
+
+继续用户确定的速度优先方向，先验证同一个 FP32 编码器能否释放耗时余量，不改变证据选择策略。使用 [BAAI 固定版本的官方 ONNX 图](https://huggingface.co/BAAI/bge-m3/tree/5617a9f61b028005a4858fdac845db406aefb181/onnx)，小图 724,923 字节与外部权重 2,266,820,608 字节分别校验公开 SHA256；原生权重和原 tokenizer / CLS 配置也与固定版本逐项校验。图输出 sentence_embedding，CPU4/1、sequential、EXTENDED、关闭 spin / GELU 近似，无量化。原生和 ONNX 使用相同的两次 FP32 L2。
+
+冻结的执行段夹测为原生前测 → ONNX → 原生后测：各 16 次数值检查、3 次预热和 45 次计时，使用从实际 BGEM3Embedder 捕获的同一份输入，分词均不计时。median 分别为 145.309 / 89.454 / 136.422 ms，p95 为 1365.312 / 1136.004 / 1380.570 ms；ONNX 对两侧 median 改善 34.43%–38.44%、p95 改善 16.80%–17.71%，均通过预先固定条件。独立 NumPy 重算通过；最大坐标差约 4.21e−7、cosine distance 7.47e−12、范数误差 1.21e−7。实际最长推理 543 tokens，8192 只检查分词截断边界；不能将上述 p95 当作当前业务检索耗时。
+
+新增默认关闭的 HOJ 专用 OnnxBGEM3Embedder 与独立工厂配置，不改变个人 CLI 或索引代次。实际默认 AutoTokenizer 的 16 份查询输入与原生逐字节一致，is_fast=true；不能由 Transformers 5 的 XLMRobertaTokenizer 类名推断为慢版。真实封装又与原生对照 19 条文档，含重复 / 空文本、三批 [8,543] / [8,30] / [3,10]：IDs / mask / 批次与向量数值通过，调用方顺序保留。生命周期锁保证 close 等待当前编码；启动失败、存储构造失败、正常关闭均清理共享会话。
+
+Linux 定向 64 项与冻结导出源码上的完整 HOJ＋原生 BGE 兼容 345 项均零失败 / 错误 / 跳过，二者有重叠，不相加。首轮主机夹具因过早替换 onnxruntime 导致 Transformers/Torch 延迟导入失败，已修正；主机 HTTP 测试停滞后中断，不能算完整通过，原失败 XML / 代码保留。完整 Linux 范围不含未受影响的个人 CLI / LLM 套件，不能称全仓库测试。正常 Dockerfile 的新基础镜像未命中旧缓存，在 network=none 的 apt 步骤失败；另以原 c151 固定依赖层构建独立候选 314145cd…，逐项核对 56 个源码文件与已测快照相同，未替换运行容器。
+
+权威工件在 D:/learning-OS-RAG/data/hoj-bge-onnx-20261027：component-seal.json 流式重验实际两份权重字节并闭合计划 / 输入 / evaluator 身份；adapter-validation.json、linux-full.xml 和 candidate-build.json 记录封装与构建。完整实际检索 300 问、业务工厂 / TCP / 撤销 / 重启及新执行器的业务尾延迟尚未执行。Docker 总内存约 9.59 GiB，准备分进程原生前 / ONNX / 原生后夹测并保留所有原质量和逐组时延门槛；资源准入与总 watchdog 仍须在执行前冻结。部署仍为原 c151，课堂多证据缺口与完整八项目标仍未完成。
+
+## 前一阶段：固定两条种子证据的稠密残差诊断（2026-10-27，失败未部署）
+
+继续速度优先与原质量门槛，固定一个有外部方法依据的候选后才执行。参考 Qi Feng / Jicong Fan 的 [MemPursuit 原始预印本 §3](https://arxiv.org/html/2610.15642v1#S3) 与[作者固定提交](https://github.com/FengQi-HITSZ/MemPursuit/tree/5138dd0e6f6dbf843692526a44b696a4b9f4bcfb)，独立推导两变量 simplex ridge 解析解：保留部署前二，对归一化 dense 向量取 delta=a−b，w=clip(((q−b)·delta+1e−10)/(delta·delta+2e−10),0,1)，用 q−wa−(1−w)b 对第三条候选评分；原来源存在性、完整身份、代码引用、原始 cosine 与尾部顺序保护不变。这是固定两种子的单步本地适配，不是作者空种子迭代算法复现，也不是事实关系验证。没有改 lambda、停用词、题目 / 来源特例，失败后不扫描参数。
+
+单次断网诊断完成：六类数值 / 安全检查含 64 个随机解析最优对照；复用已保存的 19 份 query dense，仅新编码 14 个 canonical 文档切片（4 forward）及 1 warmup，新增 query forward、ANN、CE、业务存储和模型外发均 0。33 个 1024 维 FP32 向量与 manifest / 输入指纹保全；245 个原始 cosine 全通过既有 1e−6 容差，最大差 2.9565e−7。该诊断只测冻结 raw pool 上的选择，不能作为当前服务 p95 或生命周期验证。
+
+结果为失败：必要证据前三 19/24→18/24，前五保持 21/24；heldout 前三仍 7/11，前五 9/11→8/11。c004 补回一组，但 c001 / c003 的旧第三证据被挤到第四，三个原 gate 全失败；h005、h007 还有前五退步。guarded dense 对照的全部汇总指标与 baseline 相同，但 c009 / h005 的完整返回身份顺序改变，不能称逐对象复现。候选未进入生产包或镜像，未执行没有晋级依据的新 ANN / 旧 300 模型回归或部署。
+
+两位只读复核者分别确认数学适配和完整数值。数值审查最初因平台代理限额中断，恢复后由同一代理接续：33 数组、10 source / 16 input / 10 freeze hash、14 文档输入与页码身份、19 历史 query、全部 245 cosine、19 组权重 / 残差、414 候选分数 / guards、全部 20 输出与排名 / 汇总 / gate 独立重算一致；最大分数误差 1.67e−16。当前权威入口 D:/learning-OS-RAG/data/hoj-seeded-residual-20261027；preflight、report、vectors 与失败结果保留，封存 / 运行结果以该目录新工件为准。
+
+运行接续：18:23 北京时间核对原七容器均已退出，原因未确认；只启动相同容器恢复，未重建镜像 / 修改配置或删卷。18:27 新快照为 7 运行 / 6 healthy、两 API 200，后端 92719a2b…、RAG c1517e20…、判题 ac1ae3d7… 保持。HOJ 已有本地提交 793f183，RAG 为 7396ba7；此处是追加质量记录，不冒称已新提交。下一步先调查同一 BGE-M3 的精确执行优化能否释放耗时余量，不能以向量几何反复调参代替实体关系证据；没有承诺换执行器就改善质量。课堂范围与完整八项目标继续未完成。
+
+## 前一阶段：token 集合覆盖诊断（2026-10-26）
+
 追加多证据覆盖诊断（2026-10-26，候选均未合格）：继续用户确定的“保持现有速度、改善证据完整性”方向。先在冻结V9的原始候选池上验证集合边际覆盖：固定现top2，以同模型ColBERT逐查询token的新增覆盖选第三条，保留来源存在性、代码标识和完整身份。实际19个query各一次编码，文档14切片/4个batch及1次warmup；前三由19/24提高到21/24、留出由7/11到8/11，前五22/24，无部署旧前三损失、各split聚合非退步，但原all/heldout的90%门槛仍失败。单片pointwise对照仅18/24，另丢c001旧前三，不能采用。5项focused检查通过；33份FP32矩阵/3792 token行已保存，独立审计重算245候选/8617项maxima和全部选择/指标通过。入口data/hoj-set-coverage-20261026/report.json；这不是新ANN、业务p95、生命周期或旧300题回归，未移植/部署。
 
 后续位置权重假设已单次执行完：固定同一BGE revision的官方sparse_linear.pt（3516字节、SHA45c93804…），作用于同次query forward的raw hidden，ReLU后清零cls/eos/pad/unk；按位置加权新增覆盖，未使用官方词ID最大值聚合，不能称官方sparse检索复现。仅19次新query forward＋1warmup，文档编码0、复用前述14矩阵；保存完整CLS hidden/IDs/attention、dense、投影token及原始/掩码权重，共152数组。主候选前三20/24、留出8/11、前五21/24，质量失败；fresh unweighted与去特殊位置uniform均21/24，完整输出相同且重现首轮。weighted pointwise仍18/24并丢c001前三。主候选无部署旧前三损失、聚合不退步，却丢掉unweighted的c004/h005修复，h007原第五条也未返回，不能把局部修复称普遍改进。入口data/hoj-sparse-weight-coverage-20261026/report.json；独立完整数值审计已完成，88项hash/元数据及6测试核对通过，hidden重算dense/ColBERT/sparse最大误差约1.49e-8/1.04e-7/2.09e-7，所有选择与指标一致，candidateQualified=false。

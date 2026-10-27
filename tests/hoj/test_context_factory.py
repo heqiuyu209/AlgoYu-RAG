@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from qdrant_client import QdrantClient
 
-from learning_os.hoj import service, onnx_reranker, dual_index, paired_index
+from learning_os.hoj import service, onnx_reranker, onnx_embedder, dual_index, paired_index
 from learning_os.hoj.auth import now_ms
 from learning_os.hoj.contracts import Ingest
 from learning_os.hoj.index import digest
@@ -36,6 +36,8 @@ def configured(tmp_path, monkeypatch):
         HOJ_RAG_RERANK_ENGINE='onnx', HOJ_RAG_RERANK_MODEL_PATH=str(tmp_path / 'native'),
         HOJ_RAG_RERANK_GRAPH_PATH=str(tmp_path / 'graph.onnx'))
     monkeypatch.delenv('HOJ_RAG_SHARED_KEY_FILE', raising=False)
+    monkeypatch.delenv('HOJ_RAG_EMBED_ENGINE', raising=False)
+    monkeypatch.delenv('HOJ_RAG_EMBED_GRAPH_PATH', raising=False)
     for key, value in values.items():
         monkeypatch.setenv(key, value)
     events, model = [], Embedder()
@@ -162,3 +164,49 @@ def test_reranker_warmup_failure_does_not_open_storage_or_serve(configured, monk
     with pytest.raises(RuntimeError, match='warmup failed'):
         service.from_env()
     assert model.queries == ['算法学习'] and not (root / 'data/qdrant').exists()
+
+
+@pytest.mark.parametrize('updates', [
+    {'HOJ_RAG_EMBED_ENGINE':'unknown'},
+    {'HOJ_RAG_EMBED_ENGINE':'onnx'},
+    {'HOJ_RAG_EMBED_GRAPH_PATH':'graph.onnx'},
+    {'HOJ_RAG_EMBED_ENGINE':'onnx', 'HOJ_RAG_EMBED_GRAPH_PATH':'graph.onnx', 'HOJ_RAG_DEVICE':'cuda'},
+])
+def test_invalid_embedding_engine_fails_before_any_model_load(configured, monkeypatch, updates):
+    _, _, events = configured
+    for key, value in updates.items():
+        monkeypatch.setenv(key, value)
+    with pytest.raises(ValueError):
+        service.from_env()
+    assert events == []
+
+
+@pytest.mark.parametrize('failure', [None, 'warmup', 'store', 'app'])
+def test_onnx_embedding_shared_session_is_closed_once_on_shutdown_or_failure(configured, monkeypatch, failure):
+    root, model, _ = configured
+    closed = []
+    model.close = lambda: closed.append(True)
+    monkeypatch.setenv('HOJ_RAG_EMBED_ENGINE', 'onnx')
+    monkeypatch.setenv('HOJ_RAG_EMBED_GRAPH_PATH', str(root / 'bge.onnx'))
+
+    def make_model(directory, graph):
+        assert directory == root / 'bge' and graph == root / 'bge.onnx'
+        return model
+
+    def fail(*args, **kwargs):
+        raise RuntimeError('embedding cleanup fixture')
+
+    monkeypatch.setattr(onnx_embedder, 'OnnxBGEM3Embedder', make_model)
+    if failure == 'warmup':
+        monkeypatch.setattr(model, 'embed_query', fail)
+    elif failure == 'store':
+        monkeypatch.setattr(__import__('qdrant_client'), 'QdrantClient', fail)
+    elif failure == 'app':
+        monkeypatch.setattr(service, 'create_app', fail)
+    if failure:
+        with pytest.raises(RuntimeError, match='cleanup fixture'):
+            service.from_env()
+    else:
+        with TestClient(service.from_env()):
+            assert closed == []
+    assert closed == [True]

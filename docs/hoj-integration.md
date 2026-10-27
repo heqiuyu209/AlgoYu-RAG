@@ -66,6 +66,14 @@ docker compose --env-file HOJ-master/.env.rag.local -p hoj-master `
 
 本地已保留原五份 Compose并附加 `compose.rag-context.yaml`，后续更新继续带齐六份。额外路径变量 `HOJ_RAG_RERANK_ONNX_DIR` 指向包含固定 `model_O2.onnx` 的目录，已保存在忽略的 `.env.rag.local`；该目录只读挂载到 `/models/mmarco-onnx`，不放入镜像或改写原模型。实际七挂载/三命名卷和身份核对保留，后端/判题镜像未变。真实工厂/TCP探针已验证签名、重放、截止、空权限、相同输入复用、真实分词512/513，以及评分 gate 占用时删除并拒绝迟到结果；不将人工阻塞调度描述成原生 ORT kernel 计算中断。
 
+### 可选 BGE-M3 ONNX 编码器（2026-10-27，未部署）
+
+嵌入执行器单独配置：`HOJ_RAG_EMBED_ENGINE` 默认 `pytorch`；显式选择 `onnx` 还须配置 `HOJ_RAG_EMBED_GRAPH_PATH`，并保持 `HOJ_RAG_DEVICE=cpu`。原 `HOJ_RAG_MODEL_PATH` 提供固定版本 tokenizer / 配置，图路径同目录须包含 `model.onnx_data`。`onnx_embedder.py` 在启动时分别完整校验小图、外部权重及八份原配置的代码固定 SHA256，再创建 CPU-only FP32 会话；错误即阻止启动，无自动下载或原生回退。
+
+该执行器使用原默认分词配置、8192 截断上限及空 query/document prompt，每批最多8条，恢复调用方顺序，复用原共享 inference gate。工厂查询预热完成后才开放服务；关闭或初始化失败释放共享会话，close 等待当前编码完成。现有重排执行器、上下文投影和索引版本配置保持各自职责。图目录必须作为独立只读资产挂载，不加入 Git 或应用镜像。
+
+当前只完成组件与封装验证，尚无该编码器的完整300问、工厂/TCP生命周期或业务时延资格。没有新增 Compose 挂载或启用开关，本地运行服务仍为原 c151。具体证据与剩余工作以[质量检查点](hoj-evaluation.md)为准。
+
 ```powershell
 docker compose --env-file HOJ-master/.env.rag.local -p hoj-master `
   -f HOJ-master/compose.yaml -f HOJ-master/compose.dev.yaml -f HOJ-master/compose.rag.yaml `
