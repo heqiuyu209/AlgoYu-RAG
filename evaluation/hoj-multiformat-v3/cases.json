@@ -1,0 +1,664 @@
+[
+  {
+    "id": "queue-index-calibration",
+    "split": "calibration",
+    "query": "滑动窗口最大值的单调队列为什么存位置，过期边界和总复杂度是多少？",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "队列保存下标",
+        "evidence": [
+          "保存原数组下标",
+          "i-k+1",
+          "总时间 O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "queue-index-heldout",
+    "split": "heldout",
+    "query": "窗口移过去后，如何知道队首元素已经失效？每个元素反复出入会不会变成平方时间？",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "队列保存下标",
+        "evidence": [
+          "保存原数组下标",
+          "i-k+1",
+          "总时间 O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "queue-equal-calibration",
+    "split": "calibration",
+    "query": "维护窗口最大值时队尾写 < 与 <= 对重复值有什么区别？",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "相等元素与压缩",
+        "evidence": [
+          "只保留较新的相等值",
+          "不能用压缩编号代替下标"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "queue-equal-heldout",
+    "split": "heldout",
+    "query": "重复的最大数只留下最后出现的那一个可以吗？离散化后的序号能否当作它在窗口中的位置？",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "相等元素与压缩",
+        "evidence": [
+          "只保留较新的相等值",
+          "不能用压缩编号代替下标"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "coordinate-order-calibration",
+    "split": "calibration",
+    "query": "离散化排序去重后，同值编号和原数组频次应该怎么处理？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "顺序与相等",
+        "evidence": [
+          "排序并去重",
+          "相等原值使用同一个编号",
+          "出现次数不能"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "coordinate-order-heldout",
+    "split": "heldout",
+    "query": "两个相同的数被压成一个坐标，会不会意味着它们在计数统计里也只剩一次？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "顺序与相等",
+        "evidence": [
+          "排序并去重",
+          "相等原值使用同一个编号",
+          "出现次数不能"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "coordinate-distance-calibration",
+    "split": "calibration",
+    "query": "把 10、100、1000 换成 0、1、2 后还能直接用编号差算长度吗？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "不能保存原始距离",
+          "保留反查的原坐标"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "coordinate-distance-heldout",
+    "split": "heldout",
+    "query": "用压缩坐标计算几何区间的真实长度时，为什么必须另存原来的数值？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "不能保存原始距离",
+          "保留反查的原坐标"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "permutation-reset-calibration",
+    "split": "calibration",
+    "query": "next_permutation 到最后一个排列时会怎样，枚举循环为何常用 do-while？",
+    "relevant": [
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "返回 false",
+          "最小的升序排列",
+          "do-while"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "permutation-reset-heldout",
+    "split": "heldout",
+    "query": "字典序枚举时 false 是否表示数组完全没有改变？如何避免漏掉最开始的升序序列？",
+    "relevant": [
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "返回 false",
+          "最小的升序排列",
+          "do-while"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "permutation-duplicate-calibration",
+    "split": "calibration",
+    "query": "有两个 1 的 [1,1,2] 用 next_permutation 会产生六个排列吗，单次复杂度是多少？",
+    "relevant": [
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "不会把相同数值的两个副本视为可区分对象",
+          "一共 3 个",
+          "最坏 O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "permutation-duplicate-heldout",
+    "split": "heldout",
+    "query": "值相同但原下标不同的两个元素，在标准字典序排列生成中算两个不同对象吗？",
+    "relevant": [
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "不会把相同数值的两个副本视为可区分对象",
+          "一共 3 个",
+          "最坏 O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bitset-update-calibration",
+    "split": "calibration",
+    "query": "0/1 子集和的 bitset 移位为什么要使用更新前状态？",
+    "relevant": [
+      {
+        "document": "bitset",
+        "heading": "",
+        "evidence": [
+          "reachable |= reachable << w",
+          "本次更新前的可达集合",
+          "最多用一次"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bitset-update-heldout",
+    "split": "heldout",
+    "query": "用二进制位表示可达总重时，怎样防止一个物品在同一步被拿走好多次？",
+    "relevant": [
+      {
+        "document": "bitset",
+        "heading": "",
+        "evidence": [
+          "reachable |= reachable << w",
+          "本次更新前的可达集合",
+          "最多用一次"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bitset-range-calibration",
+    "split": "calibration",
+    "query": "位集只关心上限 S 时需要几位，能不能先离散化物品重量？",
+    "relevant": [
+      {
+        "document": "bitset",
+        "heading": "",
+        "evidence": [
+          "S+1 个二进制位",
+          "排名不保存和"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bitset-range-heldout",
+    "split": "heldout",
+    "query": "把重量变成它们的排序名次是否还能做相同的子集和？位集的长度由什么决定？",
+    "relevant": [
+      {
+        "document": "bitset",
+        "heading": "",
+        "evidence": [
+          "S+1 个二进制位",
+          "排名不保存和"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "euler-degree-calibration",
+    "split": "calibration",
+    "query": "无向图的欧拉回路与非闭合欧拉路径分别要求几个奇度顶点？还要检查什么？",
+    "relevant": [
+      {
+        "document": "euler",
+        "heading": "第 1 页",
+        "evidence": [
+          "同一连通分量",
+          "奇度顶点数为 0",
+          "为 2"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "euler-degree-heldout",
+    "split": "heldout",
+    "query": "图有孤立点和两颗奇度点时，判断能否一笔走完全部边的连通条件针对哪些点？",
+    "relevant": [
+      {
+        "document": "euler",
+        "heading": "第 1 页",
+        "evidence": [
+          "同一连通分量",
+          "奇度顶点数为 0",
+          "为 2"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "euler-edges-calibration",
+    "split": "calibration",
+    "query": "Hierholzer 怎样避免无向边被使用两次，输出顺序要怎么处理？",
+    "relevant": [
+      {
+        "document": "euler",
+        "heading": "第 3 页",
+        "evidence": [
+          "共用这个编号",
+          "平行边也有不同编号",
+          "最后反转结果"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "euler-edges-heldout",
+    "split": "heldout",
+    "query": "两个顶点间有多条边，一笔画程序能只用端点对表示访问过的边吗？走不动时记录的结果为何要倒序？",
+    "relevant": [
+      {
+        "document": "euler",
+        "heading": "第 3 页",
+        "evidence": [
+          "共用这个编号",
+          "平行边也有不同编号",
+          "最后反转结果"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crt-consistency-calibration",
+    "split": "calibration",
+    "query": "两个模数不互质的同余式，什么时候可以合并？",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 1 页",
+        "evidence": [
+          "(b-a) 能被 g 整除",
+          "不相容",
+          "模数不互质"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crt-consistency-heldout",
+    "split": "heldout",
+    "query": "扩展中国剩余定理为什么要比较余数差和模数的最大公约数，不能直接求普通逆元？",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 1 页",
+        "evidence": [
+          "(b-a) 能被 g 整除",
+          "不相容",
+          "模数不互质"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crt-modulus-calibration",
+    "split": "calibration",
+    "query": "合并同余方程后的周期和代表解范围是什么，64 位有何风险？",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 3 页",
+        "evidence": [
+          "lcm(m,n)=m/g*n",
+          "[0,lcm)",
+          "中间乘法也可能溢出"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crt-modulus-heldout",
+    "split": "heldout",
+    "query": "原始模数都没超过 long long，为什么扩展 CRT 计算新模数仍可能出错？",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 3 页",
+        "evidence": [
+          "lcm(m,n)=m/g*n",
+          "[0,lcm)",
+          "中间乘法也可能溢出"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rollback-compression-calibration",
+    "split": "calibration",
+    "query": "为什么可回滚并查集通常不直接使用路径压缩？需要记录什么？",
+    "relevant": [
+      {
+        "document": "rollback",
+        "heading": "00:00:03.000–00:00:22.000",
+        "evidence": [
+          "一般不做路径压缩",
+          "旧值写进修改栈"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rollback-compression-heldout",
+    "split": "heldout",
+    "query": "想恢复并查集合并前的父亲和大小时，find 还能像普通实现一样顺手修改整条路径吗？",
+    "relevant": [
+      {
+        "document": "rollback",
+        "heading": "00:00:03.000–00:00:22.000",
+        "evidence": [
+          "一般不做路径压缩",
+          "旧值写进修改栈"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rollback-snapshot-calibration",
+    "split": "calibration",
+    "query": "离线搜索中并查集回滚快照应该保存什么，同集合合并怎么处理？",
+    "relevant": [
+      {
+        "document": "rollback",
+        "heading": "00:01:10.000–00:01:35.000",
+        "evidence": [
+          "修改栈的长度作为快照",
+          "无变化的合并"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rollback-snapshot-heldout",
+    "split": "heldout",
+    "query": "本次 union 没改变任何父指针，退出递归时为什么不能简单按调用 union 的次数弹栈？",
+    "relevant": [
+      {
+        "document": "rollback",
+        "heading": "00:01:10.000–00:01:35.000",
+        "evidence": [
+          "修改栈的长度作为快照",
+          "无变化的合并"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mex-bound-calibration",
+    "split": "calibration",
+    "query": "最多 n 个不同数的集合为何只要考虑到 n 就能找到 mex，重复值怎么记？",
+    "relevant": [
+      {
+        "document": "mex",
+        "heading": "00:00:01.500–00:00:28.500",
+        "evidence": [
+          "mex 一定不大于 n",
+          "出现次数"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mex-bound-heldout",
+    "split": "heldout",
+    "query": "求最小缺失非负整数时，数组里同一个数出现三次，是三个候选还是一个已经出现的值？",
+    "relevant": [
+      {
+        "document": "mex",
+        "heading": "00:00:01.500–00:00:28.500",
+        "evidence": [
+          "mex 一定不大于 n",
+          "出现次数"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mex-count-calibration",
+    "split": "calibration",
+    "query": "动态 mex 删除一个重复元素时一定改变答案吗，离散化会有什么问题？",
+    "relevant": [
+      {
+        "document": "mex",
+        "heading": "00:01:13.500–00:01:49.000",
+        "evidence": [
+          "从 0 变 1 或从 1 变 0",
+          "不能保留不存在的整数空洞"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mex-count-heldout",
+    "split": "heldout",
+    "query": "频次从三减到二需不需要把这个值重新标成缺失？为什么按压缩后的连续编号找空位会失真？",
+    "relevant": [
+      {
+        "document": "mex",
+        "heading": "00:01:13.500–00:01:49.000",
+        "evidence": [
+          "从 0 变 1 或从 1 变 0",
+          "不能保留不存在的整数空洞"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "compare-mex-calibration",
+    "split": "calibration",
+    "query": "坐标压缩能用于比较大小，为什么用它直接求原集合 mex 却不成立？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "不能保存原始距离",
+          "保留反查的原坐标"
+        ]
+      },
+      {
+        "document": "mex",
+        "heading": "00:01:13.500–00:01:49.000",
+        "evidence": [
+          "从 0 变 1 或从 1 变 0",
+          "不能保留不存在的整数空洞"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "compare-mex-heldout",
+    "split": "heldout",
+    "query": "编号连续且有序是否就保留了所有缺失整数？请结合离散化资料和动态 mex 字幕解释。",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "不能保存原始距离",
+          "保留反查的原坐标"
+        ]
+      },
+      {
+        "document": "mex",
+        "heading": "00:01:13.500–00:01:49.000",
+        "evidence": [
+          "从 0 变 1 或从 1 变 0",
+          "不能保留不存在的整数空洞"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "compare-duplicates-calibration",
+    "split": "calibration",
+    "query": "值域压缩去重与 next_permutation 对重复值的处理各是什么意思，原数组频次会消失吗？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "顺序与相等",
+        "evidence": [
+          "排序并去重",
+          "相等原值使用同一个编号",
+          "出现次数不能"
+        ]
+      },
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "不会把相同数值的两个副本视为可区分对象",
+          "一共 3 个",
+          "最坏 O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "compare-duplicates-heldout",
+    "split": "heldout",
+    "query": "两个相同数在离散化和字典序不同排列中怎样处理？请分别给出依据。",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "顺序与相等",
+        "evidence": [
+          "排序并去重",
+          "相等原值使用同一个编号",
+          "出现次数不能"
+        ]
+      },
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "不会把相同数值的两个副本视为可区分对象",
+          "一共 3 个",
+          "最坏 O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "online-compression",
+    "split": "calibration",
+    "query": "已有离散化编号后不断插入任意新值，如何在线保持所有编号不变并支持第 k 小？",
+    "relevant": [],
+    "category": "near",
+    "reason": "资料只描述先收集全部值的离线压缩，没有在线动态顺序统计结构。"
+  },
+  {
+    "id": "hamilton",
+    "split": "heldout",
+    "query": "按欧拉路径的奇度规则能在线性时间判断访问每个顶点恰好一次的哈密顿路径吗？",
+    "relevant": [],
+    "category": "near",
+    "reason": "资料针对每条边恰好一次，没有给出哈密顿路径算法或这种等价关系。"
+  },
+  {
+    "id": "negative-weight",
+    "split": "calibration",
+    "query": "bitset 子集和如何处理既有正数又有负数并恢复所有选取的下标？",
+    "relevant": [],
+    "category": "near",
+    "reason": "资料明确没有负重量表示或方案恢复，不能把可行性误当成恢复算法。"
+  },
+  {
+    "id": "persistent-dsu",
+    "split": "heldout",
+    "query": "可持久化并查集怎样在线合并两个任意历史版本？给出完整复杂度证明。",
+    "relevant": [],
+    "category": "near",
+    "reason": "字幕明确未展开可持久化并查集或在线全动态连通性。"
+  },
+  {
+    "id": "current-contest",
+    "split": "calibration",
+    "query": "2026 年蓝桥杯全国赛官方获奖名单里我校有谁？",
+    "relevant": [],
+    "category": "far",
+    "reason": "固定算法讲义不包含现实赛事名单。"
+  },
+  {
+    "id": "my-ac",
+    "split": "heldout",
+    "query": "我昨天在牛客一共通过了多少题，具体题号是什么？",
+    "relevant": [],
+    "category": "far",
+    "reason": "固定讲义不包含个人提交记录，评测不访问账号或在线数据库。"
+  },
+  {
+    "id": "restricted-mex",
+    "split": "calibration",
+    "query": "多重集合删除重复值后如何维护最小缺失非负整数？",
+    "relevant": [],
+    "category": "scope",
+    "reason": "明确范围只包含回滚并查集，不能使用其他已索引字幕回答 mex。",
+    "documents": [
+      "rollback"
+    ]
+  },
+  {
+    "id": "empty-scope",
+    "split": "heldout",
+    "query": "扩展 CRT 的新模数是多少？",
+    "relevant": [],
+    "category": "scope",
+    "reason": "授权文档集合为空，任何候选都会构成范围泄漏。",
+    "documents": []
+  }
+]

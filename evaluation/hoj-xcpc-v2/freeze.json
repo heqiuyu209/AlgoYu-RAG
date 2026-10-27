@@ -1,0 +1,27 @@
+{
+  "purpose": "Fixed before implementing or observing hybrid retrieval; assistant-authored synthetic labels, not externally validated.",
+  "files": {
+    "cases.json": "778cb5d08f19adec37ded6404866aa6088e932da3e7d967bf4327194a2a62eb1",
+    "documents\\aho.md": "2c972303dfad254752d3ba90f1e5095a654b14fb673e3039d760557ac09b953b",
+    "documents\\bridge.md": "dc4cb56b6a62212fe38e22b187da7d9eac382485f736a7c0463ec15f42a73ce1",
+    "documents\\digit.md": "78b4cdbb1fdccb6eb4f489e28d852a0f0acc7ae066428203a84eb4428ffc78c0",
+    "documents\\hash.md": "ac4d3d98dceb4cfa99b89eebbbd8856b6735f5b55076ba7045f09f06995f7a94",
+    "documents\\hld.md": "f14fb208aed4fa69bfc0c649fa94b0164562f7c8eef9166a71788118582afe67",
+    "documents\\lca.md": "37eb955902b5edb7e66db2cd0c3900e96c9a2120b0150f91dbd6a55297ad2ece",
+    "documents\\mitm.md": "ec3dcf536afb85e54b216fb813ce81ad087dc44a6431159e831b90bc970f70c9",
+    "documents\\sam.md": "f8c7e26bb9731b83ab66875ff5a7efe82e7bdaaeada424973cbbf4c841d9b579",
+    "documents\\scc.md": "f5aa8bccff12b65570eb6e506a0fd9c0c2fe40e8d3feaf98d9c4219f0be1df1d",
+    "documents\\sparse.md": "0b1c1d9741ddcebc6c9e1e4be0aee880b34e02890f60ad7b903c453ebff529ae",
+    "documents\\z.md": "d65222602b0c8b073da4eafd6e26646f966ac4da1cf9cfadc47d36a5a10ccb5a",
+    "documents\\zeroone.md": "6f5afc5f38f90806fbe725dcddd9a0cbf50994a5c3f7e9f7b38d386e273f768b",
+    "README.md": "1be91644255d089431aa356f94b32bb56f0f37d3bbc8fdea4486e5a5f9da2627"
+  },
+  "documents": 12,
+  "cases": 66,
+  "splits": {
+    "calibration": 33,
+    "heldout": 33
+  },
+  "evidenceGroups": 52,
+  "chunks": 24
+}

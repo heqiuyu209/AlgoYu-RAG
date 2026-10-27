@@ -1,0 +1,183 @@
+Lecture 13 Graphs I: BFS 6.006 Fall 2011
+Lecture 13: Graphs I: Breadth First Search
+Lecture Overview
+• Applications of Graph Search
+• Graph Representations
+• Breadth-First Search
+Recall:
+Graph G = (V, E)
+• V = set of vertices (arbitrary labels)
+• E = set of edges i.e. vertex pairs ( v, w)
+– ordered pair =⇒ directed edge of graph
+– unordered pair =⇒ undirected
+a b
+c d
+a
+b c
+UNDIRECTED DIRECTED
+e.g. V = {a,b,c,d}
+E = {{a,b},{a,c},
+         {b,c},{b,d},
+         {c,d}}
+V = {a,b,c}
+E = {(a,c),(b,c),
+         (c,b),(b,a)}
+Figure 1: Example to illustrate graph terminology
+Graph Search
+“Explore a graph”, e.g.:
+• ﬁnd a path from start vertex s to a desired vertex
+• visit all vertices or edges of graph, or only those reachable from s
+1
+
+Lecture 13 Graphs I: BFS 6.006 Fall 2011
+Applications:
+There are many.
+• web crawling (how Google ﬁnds pages)
+• social networking (Facebook friend ﬁnder)
+• network broadcast routing
+• garbage collection
+• model checking (ﬁnite state machine)
+• checking mathematical conjectures
+• solving puzzles and games
+Pocket Cube:
+Consider a 2 2 2 Rubik’s cube× ×
+Conﬁguration Graph:
+• vertex for each possible state
+• edge for each basic move (e.g., 90 degree turn) from one state to another
+• undirected: moves are reversible
+Diameter (“God’s Number”)
+11 for 2× 2× 2, 20 for 3× 3× 3, Θ(n2/ lg n) for n× n× n [Demaine, Demaine, Eisenstat
+Lubiw Winslow 2011]
+. . . “breadth-
+first
+tree”
+possible 
+first moves
+reachable 
+in two steps 
+but not one
+“hardest 
+configs”
+solved
+2
+
+Lecture 13 Graphs I: BFS 6.006 Fall 2011
+# vertices = 8! · 38 = 264, 539, 520 where 8! comes from having 8 cubelets in arbitrary
+positions and 3 8 comes as each cubelet has 3 possible twists.
+This can be divided by 24 if we remove cube symmetries and further divided by 3 to account
+for actually reachable conﬁgurations (there are 3 connected components).
+Graph Representations: (data structures)
+Adjacency lists:
+Array Ad jof|V| linked
+lists
+• for each vertex u∈ V, Ad j[u] stores u’s neighbors, i.e., {v∈ V | (u, v)∈ E}. (u, v)
+are just outgoing edges if directed. (See Fig. 2 for an example.)
+a
+b c
+a
+b
+c
+c
+c
+b
+a
+Adj
+Figure 2: Adjacency List Representation: Space Θ(V + E)
+• in Python: Ad j = dictionary of list/set values; vertex = any hashable object (e.g.,
+int, tuple)
+• advantage: multiple graphs on same vertices
+Implicit Graphs:
+Adj(u) is a function — compute local structure on the ﬂy(e.g., Rubik’s Cube). This requires
+“Zero” Space.
+3
+
+Lecture 13 Graphs I: BFS 6.006 Fall 2011
+Object-oriented Variations:
+• object for each vertex u
+• u.neighbors = list of neighbors i.e. Ad j[u]
+In other words, this is method for implicit graphs
+Incidence Lists:
+• can also make edges objects
+e.a e.be
+• u.edges = list of (outgoing) edges from u.
+• advantage: store edge data without hashing
+Breadth-First Search
+Explore graph level by level from s
+• level 0 ={s}
+level i = vertices reachable by path of i edges but not fewer•
+. . .
+level0
+s
+level1
+level2
+last
+level
+Figure 3: Illustrating Breadth-First Search
+4
+
+Lecture 13 Graphs I: BFS 6.006 Fall 2011
+• build level i > 0 from level i− 1 by trying all outgoing edges, but ignoring vertices
+from previous levels
+Breadth-First-Search Algorithm
+BFS (V,Adj,s): See CLRS for queue-based implementation
+level ={ s: 0}
+parent ={s : None}
+i = 1
+frontier = [s] # previous level, i− 1
+while frontier:
+next = [ ] # next level, i
+for u in frontier:
+for v in Adj [u]:
+if v not in level: # not yet seen
+level[v] = i ♯ = level[u] + 1
+parent[v] = u
+next.append(v)
+frontier = next
+i + =1
+Example
+a s d f
+vcxz
+1 0 2 3
+322 1
+level 0level 1
+level 2 level 3
+frontier0  = {s}
+frontier1  = {a, x}
+frontier2  = {z, d, c}
+frontier3  = {f, v}
+(not x, c, d)
+Figure 4: Breadth-First Search Frontier
+Analysis:
+• vertex V enters next (& then frontier)
+only once (because level[v ] then set)
+base case: v = s
+5
+
+Lecture 13 Graphs I: BFS 6.006 Fall 2011
+• =⇒ Adj[v] looped through only once
+time =
+∑ E for directed graphs|Ad j[V ]| = | |
+v∈V
+{
+2|E| for undirected graphs
+• =⇒ O(E) time
+• O(V + E) (“LINEAR TIME”) to also list vertices unreachable from v (those still not
+assigned level)
+Shortest Paths:
+cf. L15-18
+• for every vertex v, fewest edges to get from s to v is
+{
+level[v] if v assigned level
+∞ else (no path)
+• parent pointers form shortest-path tree = union of such a shortest path for each v
+=⇒ to ﬁnd shortest path, take v, parent[v], parent[parent[v]], etc., until s (or None)
+6
+
+MIT OpenCourseWare
+http://ocw.mit.edu
+6.006 Introduction to Algorithms 
+Fall  2011
+ 
+ 
+ 
+For information about citing these materials or our Terms of Use, visit: http://ocw.mit.edu/terms.

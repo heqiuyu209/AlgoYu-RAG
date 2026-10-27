@@ -1,0 +1,15 @@
+{
+  "createdAt": "2026-10-21T07:26:55.988392+00:00",
+  "files": {
+    "cases.json": "0e60b885b76a391534f88112033832d8354f9eadcfa7fb6280da43ae1ab7cbf1",
+    "documents.json": "ff9fe22ce10e25fe8812d43803b13193990e84cc4090008094fd8e1ace8109ad",
+    "documents/queue.md": "c6c5e7a8a19287a60b2dde25b549c5363cda665461fdbfffcf1a6d2bb5b9c410",
+    "documents/coordinate.md": "d306fc13a7b4ef602d9a746d1fc9ea62d9eaaae8a9b901fbf29f9e1b51a5ffc1",
+    "documents/permutation.txt": "9dcc80ee8aa5370d5a9c677a1d4f96f1c09050531d33a74a28e54c9317ddc3fc",
+    "documents/bitset.txt": "177bba42298c86822a46b09b56e364b4f2c8680aaa5d4a34444a75ddec3a6594",
+    "documents/euler.pages.txt": "7039733bfe46dc6ce872743b1f778970e853da39200f0e3146b9941a4e445ce0",
+    "documents/crt.pages.txt": "5b417f8a393f28c416212d76c111dd59adc3b2593f0beb546d0dfc1a71b93c02",
+    "documents/rollback.json": "746971765ca1ea0bbfdd3c6ed6a6350db6dbe75118cd8bb21580bd49a2efa851",
+    "documents/mex.json": "ac98329bcaacdcd12795ec94877a450b55545690397fabe062c7ebf06b29ba2a"
+  }
+}

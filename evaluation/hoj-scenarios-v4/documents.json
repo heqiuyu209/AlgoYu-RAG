@@ -1,0 +1,50 @@
+[
+  {
+    "id": "queue",
+    "title": "单调队列维护窗口极值",
+    "format": "markdown",
+    "file": "documents/queue.md"
+  },
+  {
+    "id": "coordinate",
+    "title": "离线坐标压缩的保留量",
+    "format": "markdown",
+    "file": "documents/coordinate.md"
+  },
+  {
+    "id": "permutation",
+    "title": "字典序排列枚举备忘",
+    "format": "text",
+    "file": "documents/permutation.txt"
+  },
+  {
+    "id": "bitset",
+    "title": "位集表达非负子集和",
+    "format": "text",
+    "file": "documents/bitset.txt"
+  },
+  {
+    "id": "euler",
+    "title": "无向图欧拉路径手册",
+    "format": "pdf",
+    "file": "documents/euler.pages.txt"
+  },
+  {
+    "id": "crt",
+    "title": "非互质同余方程合并",
+    "format": "pdf",
+    "file": "documents/crt.pages.txt"
+  },
+  {
+    "id": "rollback",
+    "title": "可回滚并查集课堂字幕",
+    "format": "video",
+    "file": "documents/rollback.json"
+  },
+  {
+    "id": "mex",
+    "title": "动态集合 mex 字幕",
+    "format": "video",
+    "file": "documents/mex.json"
+  }
+]

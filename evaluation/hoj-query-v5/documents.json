@@ -1,0 +1,62 @@
+[
+  {
+    "id": "bridge",
+    "title": "无向图桥与重边",
+    "format": "markdown",
+    "file": "documents/bridge.md"
+  },
+  {
+    "id": "hld",
+    "title": "重链剖分路径操作",
+    "format": "markdown",
+    "file": "documents/hld.md"
+  },
+  {
+    "id": "lca",
+    "title": "倍增最近公共祖先",
+    "format": "markdown",
+    "file": "documents/lca.md"
+  },
+  {
+    "id": "sam",
+    "title": "后缀自动机状态统计",
+    "format": "markdown",
+    "file": "documents/sam.md"
+  },
+  {
+    "id": "queue",
+    "title": "单调队列维护窗口极值",
+    "format": "markdown",
+    "file": "documents/queue.md"
+  },
+  {
+    "id": "coordinate",
+    "title": "离线坐标压缩的保留量",
+    "format": "markdown",
+    "file": "documents/coordinate.md"
+  },
+  {
+    "id": "permutation",
+    "title": "字典序排列枚举备忘",
+    "format": "text",
+    "file": "documents/permutation.txt"
+  },
+  {
+    "id": "crt",
+    "title": "非互质同余方程合并",
+    "format": "pdf",
+    "file": "documents/crt.pages.txt"
+  },
+  {
+    "id": "rollback",
+    "title": "可回滚并查集课堂字幕",
+    "format": "video",
+    "file": "documents/rollback.json"
+  },
+  {
+    "id": "mex",
+    "title": "动态集合 mex 字幕",
+    "format": "video",
+    "file": "documents/mex.json"
+  }
+]

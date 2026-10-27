@@ -1,0 +1,17 @@
+{
+  "frozenAtUtc": "2026-10-26T06:44:53.766331+00:00",
+  "frozenBeforeFirstRanks": true,
+  "firstProjectUseOfDocuments": true,
+  "files": {
+    "cases.json": "406e8cc3e8f0307807a5f74eb0d95cc56b0017f7842d723e7f15d35b956578e3",
+    "documents/mit6006-bfs.txt": "933e804f09240940869f4db7ee62f6436fb59f12aaee2853273187c5fe3e6bcb",
+    "documents/mit6006-dfs.txt": "19e81d88db55893863fbd5c9e7179d2f91220b05fbb68acb91350c38d5b34b3e",
+    "documents.json": "b3b22fd613180e1ccd1490b913628cf7b3304f15e38ad992441dbaab2c920ee0",
+    "extraction-observations.json": "28f48ea2c16a0fa5ffcf77c26e61dc94ee1e84193c4d17b1f486a391c69c63d1",
+    "LICENSE.md": "b57dbbd5987b1c66123bd567c2ed608265863574e7784343cec0fd0f99103125",
+    "originals/mit6006-bfs.pdf": "d10f747d886f4fa930d5cef470af7421a74877587276d45cbf2aa7e9fc43cd0c",
+    "originals/mit6006-dfs.pdf": "531c70ff75c9c892ea79b204021032d8a8310bd5444ce927d504bab07d42b3f3",
+    "provenance.json": "fa61dc3f8f406c8cbc3ca6127d3c29fd68c8ff923093b021602c3d71371b92fb",
+    "README.md": "1dbc957b2c3fd20783336538656c707f69992a7ad1798fd0a46da1c43a3e0caa"
+  }
+}

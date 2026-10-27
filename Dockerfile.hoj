@@ -1,0 +1,18 @@
+FROM python:3.12-slim-bookworm
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app/src \
+    HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false \
+    OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 HOJ_RAG_DEVICE=cpu
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
+ARG TORCH_VERSION=2.13.0
+RUN pip install --no-cache-dir torch==${TORCH_VERSION} --index-url https://download.pytorch.org/whl/cpu
+COPY requirements-hoj.txt ./
+RUN pip install --no-cache-dir -r requirements-hoj.txt
+RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng tesseract-ocr-chi-sim ffmpeg && rm -rf /var/lib/apt/lists/*
+COPY src/ ./src/
+RUN test ! -e /app/src/learning_os/hoj/experiments
+COPY scripts/init_hoj_identity.py scripts/hoj_healthcheck.py ./scripts/
+RUN mkdir -p /data && chown 10001:10001 /data
+USER 10001:10001
+EXPOSE 8097
+CMD ["python", "-m", "uvicorn", "learning_os.hoj.service:from_env", "--factory", "--host", "0.0.0.0", "--port", "8097", "--workers", "1", "--no-access-log", "--log-level", "warning"]

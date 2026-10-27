@@ -33,9 +33,23 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+hoj = [
+    "transformers==5.20.2",
+    "onnxruntime==1.31.0",
+    "pypdf==6.21.1",
+    "PyMuPDF==1.28.0",
+    "pypdfium2==5.14.0",
+    "Pillow==13.0.0",
+    "faster-whisper==1.2.1",
+    "ctranslate2==4.8.3",
+    "av==19.0.1",
+    "fastapi>=0.141,<0.142",
+    "uvicorn>=0.52,<0.53",
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
+    "httpx>=0.28,<0.29",
 ]
 
 [project.scripts]

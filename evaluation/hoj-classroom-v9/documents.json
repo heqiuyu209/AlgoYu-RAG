@@ -1,0 +1,14 @@
+[
+  {
+    "id": "mit6006-bfs",
+    "title": "MIT 6.006 Lecture 13: Breadth-first search (BFS)",
+    "format": "pdf",
+    "file": "documents/mit6006-bfs.txt"
+  },
+  {
+    "id": "mit6006-dfs",
+    "title": "MIT 6.006 Lecture 14: Depth-first search (DFS), topological sorting",
+    "format": "pdf",
+    "file": "documents/mit6006-dfs.txt"
+  }
+]

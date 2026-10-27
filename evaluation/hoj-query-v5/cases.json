@@ -1,0 +1,334 @@
+[
+  {
+    "id": "v5-c001",
+    "split": "calibration",
+    "query": "If a DFS tree edge u-v satisfies low[v] == dfn[u], is it a bridge, and which strict inequality identifies a bridge?",
+    "relevant": [
+      {
+        "document": "bridge",
+        "heading": "桥的判据",
+        "evidence": [
+          "DFS 树边 u-v 在 low[v]>dfn[u] 时是桥，说明 v 子树没有回到 u 或更早祖先的替代路径。判据是严格大于；low[v]==dfn[u] 表示还能回到 u，所以该树边不是桥。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-c002",
+    "split": "calibration",
+    "query": "后缀自动机的新普通状态和克隆状态分别从多少 occ 开始？最终怎样传播计数，为什么克隆不能也按新读入的位置计一次？",
+    "relevant": [
+      {
+        "document": "sam",
+        "heading": "克隆计数",
+        "evidence": [
+          "每次扩展的新普通状态初始 occ=1，克隆状态初始 occ=0。最后按 len 从大到小把 occ[v] 加给 occ[link[v]]，得到 endpos 出现次数。克隆只是拆分等价类，不代表多扫描一个文本位置。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-c003",
+    "split": "calibration",
+    "query": "倍增祖先表的递推式是什么？根以上没有祖先时怎样统一初始化，预处理的时间复杂度是多少？",
+    "relevant": [
+      {
+        "document": "lca",
+        "heading": "祖先表",
+        "evidence": [
+          "up[v][j]=up[up[v][j-1]][j-1]，表示 v 向上 2^j 步的祖先。根的不存在祖先统一使用哨兵 0，令 up[0][j]=0，避免访问负下标。预处理 O(n log n)。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-c004",
+    "split": "calibration",
+    "query": "重链剖分为何先访问重儿子？重儿子怎样选，节点 u 的整个子树对应哪个 dfn 区间？",
+    "relevant": [
+      {
+        "document": "hld",
+        "heading": "重儿子与编号",
+        "evidence": [
+          "重儿子选子树大小最大的儿子；先访问重儿子，使一条重链上的 dfn 连续。top[u] 记录所在链顶。子树也对应连续区间 [dfn[u],dfn[u]+size[u]-1]，可交给线段树维护。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-c005",
+    "split": "calibration",
+    "query": "For x≡a (mod m) and x≡b (mod n), what is the necessary and sufficient compatibility test when the moduli need not be coprime, and why is the ordinary coprime CRT formula unsafe here?",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 1 页",
+        "evidence": [
+          "合并 x≡a (mod m) 与 x≡b (mod n)，先取 g=gcd(m,n)。存在解的必要且充分条件是 (b-a) 能被 g 整除；否则两条同余式不相容。不能在模数不互质时直接套用要求逆元存在的普通互质 CRT 公式。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-c006",
+    "split": "calibration",
+    "query": "next_permutation 遇到最大的降序排列时返回什么，并怎样改变序列？从最小排列开始完整枚举时，为什么材料采用先排序再 do-while 的顺序？",
+    "relevant": [
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "next_permutation 把当前序列改成严格字典序更大的下一个排列。若已经是最大的降序排列，它返回 false，并把序列重排为最小的升序排列。要从最小到最大枚举所有不同排列，应先排序，然后用 do-while 先处理初始序列，再调用 next_permutation。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-c007",
+    "split": "calibration",
+    "query": "给滑动窗口最大值使用坐标压缩时，相等原值应怎样编号、重复出现次数能否丢弃？单调队列比较这些编号时，队列实际应保存什么位置信息？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "顺序与相等",
+        "evidence": [
+          "离线坐标压缩先收集全部值，排序并去重，再给不同值依次编号。原值 x<y 当且仅当 rank(x)<rank(y)，相等原值使用同一个编号。数组里两个相同值的出现次数不能因为值域去重就从频次数组中丢失。压缩保存大小关系和相等关系，编号不是原数组位置。"
+        ]
+      },
+      {
+        "document": "queue",
+        "heading": "相等元素与压缩",
+        "evidence": [
+          "若用坐标压缩后的值比较大小，压缩必须保持大小关系，队列里保存的仍是原数组下标，不能用压缩编号代替下标。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-c008",
+    "split": "calibration",
+    "query": "Compare binary-lifting LCA with heavy-light path queries backed by a segment tree: what upward move does each procedure make, and what query complexity does each document state?",
+    "relevant": [
+      {
+        "document": "lca",
+        "heading": "同步抬升",
+        "evidence": [
+          "先把较深的点抬到相同深度；若两点已经相同，该点就是 LCA。否则按 j 从大到小检查，若 up[u][j]!=up[v][j]，同时抬升两点；结束后 parent[u] 即最近公共祖先。一次查询 O(log n)。"
+        ]
+      },
+      {
+        "document": "hld",
+        "heading": "跨链跳跃",
+        "evidence": [
+          "查询 u 到 v 的路径时，只要 top[u]!=top[v]，先处理链顶深度较大的一端的区间 [dfn[top[u]],dfn[u]]，再令 u=parent[top[u]]。最后处理同一条链中的剩余区间。每次跨越一条轻边，路径最多被拆为 O(log n) 段；配合线段树通常为 O(log^2 n)。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-c009",
+    "split": "calibration",
+    "query": "如果滑动窗口长度 k 在处理过程中在线增大或缩小，单调队列应怎样恢复先前删除的元素并调整过期规则？",
+    "relevant": [],
+    "category": "near",
+    "reason": "queue 描述固定长度 k 的滑动窗口，没有说明在线变长窗口或恢复已删除元素的方法。"
+  },
+  {
+    "id": "v5-c010",
+    "split": "calibration",
+    "query": "CRT 合并接口若允许输入模数为 0 或负数，应该怎样定义这些同余约束、归一化输入并判断相容？",
+    "relevant": [],
+    "category": "near",
+    "reason": "CRT 材料给出了通常模数下的相容条件和合并过程，没有定义零模数、负模数的输入语义或处理规则。"
+  },
+  {
+    "id": "v5-c011",
+    "split": "calibration",
+    "query": "只依据 bridge 和 sam，不使用 lca：倍增祖先表怎样表示根以上不存在的祖先，哨兵自身的表项又怎样初始化？",
+    "documents": [
+      "bridge",
+      "sam"
+    ],
+    "relevant": [],
+    "category": "scope",
+    "reason": "问题所需的根祖先哨兵及初始化规则只在被明确排除的 lca 中出现；允许范围 bridge、sam 没有这些信息。"
+  },
+  {
+    "id": "v5-c012",
+    "split": "calibration",
+    "query": "How should a MySQL primary-replica deployment be configured to recover from asynchronous replication lag?",
+    "relevant": [],
+    "category": "far",
+    "reason": "允许的材料均未讨论 MySQL、主从部署或复制延迟恢复。"
+  },
+  {
+    "id": "v5-h001",
+    "split": "heldout",
+    "query": "无向图有两条连接同一对顶点的平行边时，DFS 为什么不能把所有通向父顶点的边都跳过？正确的弧编号处理方式是什么？",
+    "relevant": [
+      {
+        "document": "bridge",
+        "heading": "父边编号",
+        "evidence": [
+          "无向图每条原边存两条有向弧，弧编号互为 id^1。DFS 时跳过父边对应的反向弧，而非跳过所有通往父顶点的边。两条平行边中另一条仍是回边，必须参与 low 更新。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-h002",
+    "split": "heldout",
+    "query": "A suffix-automaton state v represents which inclusive interval of substring lengths, and how do those intervals give the number of distinct nonempty substrings?",
+    "relevant": [
+      {
+        "document": "sam",
+        "heading": "状态长度区间",
+        "evidence": [
+          "后缀自动机中 len[v] 是状态 v 表示的最长子串长度。该状态表示的不同长度范围为 len[link[v]]+1 到 len[v]。不同非空子串总数等于对所有非根状态求和 len[v]-len[link[v]]。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-h003",
+    "split": "heldout",
+    "query": "In a sliding-window maximum queue, may equal-valued entries keep their older indices? Compare strict and non-strict tail deletion, and give the exact front-index expiry boundary.",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "相等元素与压缩",
+        "evidence": [
+          "队尾使用严格小于号时，会保留相等值的多个下标；使用小于等于号时只保留较新的相等值。两种写法都能求最大值，但过期判断必须依据真实位置。"
+        ]
+      },
+      {
+        "document": "queue",
+        "heading": "队列保存下标",
+        "evidence": [
+          "队首下标小于 i-k+1 时已经离开当前窗口，应当删除。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-h004",
+    "split": "heldout",
+    "query": "两条非互质同余式已判定相容后，怎样用 x=a+m*t 化简求解？合并模数与代表解的规范范围是什么，输入模数各自能放进 64 位是否足够避免溢出？",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 3 页",
+        "evidence": [
+          "相容时可令 x=a+m*t，把方程除以 g 后求 t 关于 n/g 的同余。合并后的模数为 lcm(m,n)=m/g*n，代表解规范化到 [0,lcm)。即使输入模数分别能装入 64 位，合并模数或中间乘法也可能溢出，必须根据范围使用更宽整数或可靠的大整数运算。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-h005",
+    "split": "heldout",
+    "query": "离线搜索中，可回滚并查集的快照为什么记修改栈长度？两个点已经连通、这次合并没有实际修改时，退出搜索段应该怎样准确撤销？",
+    "relevant": [
+      {
+        "document": "rollback",
+        "heading": "00:01:10.000–00:01:35.000",
+        "evidence": [
+          "进入某段离线搜索前记录修改栈的长度作为快照；退出时逐条撤销，恢复到这个栈长度。两个点已在同一集合时可以不压入实际修改，快照按栈长度记录便不会把无变化的合并误算作一次需要撤销的改动。本字幕没有展开可持久化并查集或在线全动态连通性。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-h006",
+    "split": "heldout",
+    "query": "What does mex mean for a nonnegative integer collection? If there are at most n distinct values, what upper bound follows, and how should repeated copies affect presence?",
+    "relevant": [
+      {
+        "document": "mex",
+        "heading": "00:00:01.500–00:00:28.500",
+        "evidence": [
+          "一个非负整数集合的 mex 是最小的没有出现的非负整数。最多含 n 个不同非负整数的集合，mex 一定不大于 n，因为 0 到 n 一共 n+1 个候选。若输入是带重复值的多重集合，先维护每个值的出现次数，出现一次和出现多次都表示这个值已经存在。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-h007",
+    "split": "heldout",
+    "query": "如果同一套离线坐标压缩同时用于几何长度统计和动态多重集合 mex：几何统计应额外保留什么，动态更新时只有哪两类计数变化会改变一个值的缺失状态？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "压缩不能保存原始距离、长度或缺失整数。涉及长度的几何统计应当保留反查的原坐标；求原值集合的 mex 时，也不能直接把压缩后编号的第一个空缺当成原值答案。"
+        ]
+      },
+      {
+        "document": "mex",
+        "heading": "00:01:13.500–00:01:49.000",
+        "evidence": [
+          "动态插入或删除时，只有计数从 0 变 1 或从 1 变 0 才改变该值是否缺失。可以用维护缺失位置的结构寻找第一个计数为 0 的非负整数。坐标压缩保留顺序，却不能保留不存在的整数空洞，因此不能直接把离散化后的 mex 当成原数集合的 mex。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-h008",
+    "split": "heldout",
+    "query": "Compare duplicate handling in a maximum-window queue and sorted next_permutation enumeration: can the queue retain several equal-valued positions, and does [1,1,2] produce three or six distinct value sequences?",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "相等元素与压缩",
+        "evidence": [
+          "队尾使用严格小于号时，会保留相等值的多个下标；使用小于等于号时只保留较新的相等值。两种写法都能求最大值，但过期判断必须依据真实位置。"
+        ]
+      },
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "输入含重复值时，排序后反复调用 next_permutation 得到不同的值序列，不会把相同数值的两个副本视为可区分对象。比如 [1,1,2] 的不同结果是 [1,1,2]、[1,2,1]、[2,1,1]，一共 3 个，而不是 6 个。一次调用最坏 O(n)，输出每个完整排列本身也需要 O(n)。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v5-h009",
+    "split": "heldout",
+    "query": "重链剖分已经建立后，若查询时允许在线改变树根，如何把新根下的子树操作转成原 dfn 上的区间操作？",
+    "relevant": [],
+    "category": "near",
+    "reason": "hld 说明固定剖分下的子树连续区间与路径跨链操作，没有给出在线换根后的子树区间转换方法。"
+  },
+  {
+    "id": "v5-h010",
+    "split": "heldout",
+    "query": "如果并查集需要随机访问任意历史版本，而不是按修改栈退回，应该怎样设计完全可持久化的父亲和集合大小存储？",
+    "relevant": [],
+    "category": "near",
+    "reason": "rollback 只描述栈式回滚，并明确说明没有展开可持久化并查集；没有给出任意历史版本访问的数据结构。"
+  },
+  {
+    "id": "v5-h011",
+    "split": "heldout",
+    "query": "仅依据 queue、coordinate、mex，不查 permutation：排序后反复调用 next_permutation 枚举 [1,1,2]，有哪些不同的值序列，一共多少个？",
+    "documents": [
+      "queue",
+      "coordinate",
+      "mex"
+    ],
+    "relevant": [],
+    "category": "scope",
+    "reason": "指定范围虽讨论重复值，却没有 next_permutation 的枚举语义或该例的排列列表；直接证据位于被排除的 permutation。"
+  },
+  {
+    "id": "v5-h012",
+    "split": "heldout",
+    "query": "How does TCP congestion control choose its initial congestion window and respond to an ECN congestion signal?",
+    "relevant": [],
+    "category": "far",
+    "reason": "允许的材料未涉及 TCP、拥塞窗口或 ECN。"
+  }
+]

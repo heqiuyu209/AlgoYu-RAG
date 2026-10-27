@@ -1,0 +1,383 @@
+[
+  {
+    "id": "window-position",
+    "split": "calibration",
+    "query": "数组下标 i=5，窗口宽 k=3，队首还保存着下标 2。该如何判断它是否过期？队列里应存什么，整轮复杂度是多少？",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "队列保存下标",
+        "evidence": [
+          "保存原数组下标",
+          "i-k+1",
+          "总时间 O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "window-tie",
+    "split": "heldout",
+    "query": "In a sliding maximum queue, pop_back uses <= and drops the older equal value. Is that valid, and why can a compressed value rank not replace its array index?",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "相等元素与压缩",
+        "evidence": [
+          "只保留较新的相等值",
+          "不能用压缩编号代替下标"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "compressed-frequency",
+    "split": "calibration",
+    "query": "原数组有三个 700，离线建表只保留一个 700。统计出现次数时应记 1 还是 3？相同值编号和频次分别怎么维护？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "顺序与相等",
+        "evidence": [
+          "排序并去重",
+          "相等原值使用同一个编号",
+          "出现次数不能"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "compressed-length",
+    "split": "heldout",
+    "query": "压缩后坐标相差 2 就把线段长度加 2，这段几何统计哪里错了？需要用什么还原实际距离？",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "不能保存原始距离",
+          "保留反查的原坐标"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "permutation-loop",
+    "split": "calibration",
+    "query": "枚举代码写成 while(next_permutation(a.begin(),a.end())) solve(a);。如果 a 起初升序，哪一个排列会漏掉？结束后数组会保持降序吗？",
+    "relevant": [
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "返回 false",
+          "最小的升序排列",
+          "do-while"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "permutation-identities",
+    "split": "heldout",
+    "query": "Two equal-valued tokens have different original IDs. Does sorted next_permutation enumerate ID permutations or distinct value sequences? Include its per-call cost.",
+    "relevant": [
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "不会把相同数值的两个副本视为可区分对象",
+          "一共 3 个",
+          "最坏 O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "subset-repeat",
+    "split": "calibration",
+    "query": "只有一个重量 4 的物品。把本轮刚得到的可达集合再次左移 4 后又或回去，会错误地标记 8 可达；资料要求怎样更新来避免它？",
+    "relevant": [
+      {
+        "document": "bitset",
+        "heading": "",
+        "evidence": [
+          "reachable |= reachable << w",
+          "本次更新前的可达集合",
+          "最多用一次"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "subset-storage",
+    "split": "heldout",
+    "query": "容量上限 S=100，只检查和是否可达。位集需要多少位？把物品重量改成排序后的名次再移位还等价吗？",
+    "relevant": [
+      {
+        "document": "bitset",
+        "heading": "",
+        "evidence": [
+          "S+1 个二进制位",
+          "排名不保存和"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "euler-connectivity",
+    "split": "calibration",
+    "query": "无向图有若干孤立点，其余非零度点连通，且恰好两个奇度点。能否覆盖所有边一次，应该从哪里开始？",
+    "relevant": [
+      {
+        "document": "euler",
+        "heading": "第 1 页",
+        "evidence": [
+          "同一连通分量",
+          "奇度顶点数为 0",
+          "为 2"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "euler-parallel",
+    "split": "heldout",
+    "query": "My undirected route uses visited[u][v], so the second parallel edge disappears. How should the edge identity be stored, and how should the result collected during backtracking be ordered?",
+    "relevant": [
+      {
+        "document": "euler",
+        "heading": "第 3 页",
+        "evidence": [
+          "共用这个编号",
+          "平行边也有不同编号",
+          "最后反转结果"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crt-example",
+    "split": "calibration",
+    "query": "系统要合并 x≡2 (mod 6) 与 x≡5 (mod 9)。该用哪个整除条件检查相容性，合并周期和标准代表解区间按什么式子计算？",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 1 页",
+        "evidence": [
+          "(b-a) 能被 g 整除",
+          "不相容",
+          "模数不互质"
+        ]
+      },
+      {
+        "document": "crt",
+        "heading": "第 3 页",
+        "evidence": [
+          "lcm(m,n)=m/g*n",
+          "[0,lcm)",
+          "中间乘法也可能溢出"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crt-width",
+    "split": "heldout",
+    "query": "Each input modulus fits int64, so a programmer also stores m/g*n and all intermediate products in int64. Is that guarantee sufficient? State the resulting period and normalization range.",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 3 页",
+        "evidence": [
+          "lcm(m,n)=m/g*n",
+          "[0,lcm)",
+          "中间乘法也可能溢出"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rollback-query-write",
+    "split": "calibration",
+    "query": "回滚搜索里 find 写着 parent[x]=find(parent[x])，但撤销栈只记录 union 修改。为什么这种查找方式会破坏恢复，原资料建议记录什么？",
+    "relevant": [
+      {
+        "document": "rollback",
+        "heading": "00:00:03.000–00:00:22.000",
+        "evidence": [
+          "一般不做路径压缩",
+          "旧值写进修改栈"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rollback-empty-union",
+    "split": "heldout",
+    "query": "A recursion frame calls union twice, but the second call joins nodes already connected. Should cleanup pop exactly two changes, or restore a saved stack length? Explain the no-change case.",
+    "relevant": [
+      {
+        "document": "rollback",
+        "heading": "00:01:10.000–00:01:35.000",
+        "evidence": [
+          "修改栈的长度作为快照",
+          "无变化的合并"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mex-duplicates",
+    "split": "calibration",
+    "query": "集合里某个数出现 3 次，删除一个以后计数为 2。这个数现在是否缺失？维护 mex 时哪些计数跳变才需要更新缺失结构？",
+    "relevant": [
+      {
+        "document": "mex",
+        "heading": "00:01:13.500–00:01:49.000",
+        "evidence": [
+          "从 0 变 1 或从 1 变 0",
+          "不能保留不存在的整数空洞"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mex-bound-example",
+    "split": "heldout",
+    "query": "输入长度 1000，但只有 5 个不同的非负整数。为什么确定 mex 上界时应关注不同值个数，而不是把重复副本都当成已覆盖的候选？",
+    "relevant": [
+      {
+        "document": "mex",
+        "heading": "00:00:01.500–00:00:28.500",
+        "evidence": [
+          "mex 一定不大于 n",
+          "出现次数"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gap-comparison",
+    "split": "calibration",
+    "query": "业务把离散化编号既用于比较大小，又用于寻找原数集合中缺失的最小整数。前者为何可行而后者不行？分别引用坐标压缩讲义和动态 mex 字幕。",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "不能保存原始距离",
+          "保留反查的原坐标"
+        ]
+      },
+      {
+        "document": "mex",
+        "heading": "00:01:13.500–00:01:49.000",
+        "evidence": [
+          "从 0 变 1 或从 1 变 0",
+          "不能保留不存在的整数空洞"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "duplicate-comparison",
+    "split": "heldout",
+    "query": "A student thinks deduplicating the compression table means equal array entries vanish, while next_permutation must distinguish their original positions. Explain both misconceptions with the two sources.",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "顺序与相等",
+        "evidence": [
+          "排序并去重",
+          "相等原值使用同一个编号",
+          "出现次数不能"
+        ]
+      },
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "不会把相同数值的两个副本视为可区分对象",
+          "一共 3 个",
+          "最坏 O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crt-conflict",
+    "split": "calibration",
+    "query": "同余方程余数差不能被 gcd(m,n) 整除时，可不可以继续硬套互质 CRT 的求逆公式？原资料给出的可合并条件是什么？",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 1 页",
+        "evidence": [
+          "(b-a) 能被 g 整除",
+          "不相容",
+          "模数不互质"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mex-gap-example",
+    "split": "heldout",
+    "query": "已有值的压缩编号连续，并不能证明原数轴中没有空洞。请根据两份资料说明为什么按编号求 mex 不能直接还原原答案。",
+    "relevant": [
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "不能保存原始距离",
+          "保留反查的原坐标"
+        ]
+      },
+      {
+        "document": "mex",
+        "heading": "00:01:13.500–00:01:49.000",
+        "evidence": [
+          "从 0 变 1 或从 1 变 0",
+          "不能保留不存在的整数空洞"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unsupported-directed",
+    "split": "calibration",
+    "query": "有向图每个点入度与出度不同的时候，如何修改欧拉路径判定和构造？给出完整算法。",
+    "relevant": [],
+    "category": "near",
+    "reason": "这组资料仅给出无向图条件，没有有向图算法。"
+  },
+  {
+    "id": "unsupported-stream",
+    "split": "heldout",
+    "query": "未知后续整数时，如何流式重编号并保证已经发给外部系统的所有坐标编号永远不变？",
+    "relevant": [],
+    "category": "near",
+    "reason": "仅有离线全值收集与保序编号，没有在线稳定编号方案。"
+  },
+  {
+    "id": "unsupported-ranking",
+    "split": "calibration",
+    "query": "我这个月正式比赛 rating 涨了多少，哪场比赛贡献最大？",
+    "relevant": [],
+    "category": "far",
+    "reason": "固定资料无个人成绩和评级事件。"
+  },
+  {
+    "id": "unsupported-scope",
+    "split": "heldout",
+    "query": "Hierholzer 怎样给平行无向边编号，最后怎样输出路径？",
+    "documents": [
+      "bitset",
+      "permutation"
+    ],
+    "relevant": [],
+    "category": "scope",
+    "reason": "本次仅授权两份 TXT；欧拉资料不在授权范围。"
+  }
+]

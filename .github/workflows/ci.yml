@@ -24,12 +24,26 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
+      - name: Install CPU inference runtime
+        if: matrix.python-version == '3.12'
+        run: python -m pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install base dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Run tests with coverage
+      - name: Install HOJ service dependencies
+        if: matrix.python-version == '3.12'
+        run: python -m pip install -r requirements-hoj.txt -e ".[dev,hoj]"
+
+      - name: Run Python 3.11 CLI tests with coverage
+        if: matrix.python-version == '3.11'
+        run: |
+          python -m pytest tests/ --ignore=tests/hoj -v --tb=short --cov=learning_os --cov-report=term --cov-report=xml
+
+      - name: Run CLI and HOJ tests with coverage
+        if: matrix.python-version == '3.12'
         run: |
           python -m pytest tests/ -v --tb=short --cov=learning_os --cov-report=term --cov-report=xml
 

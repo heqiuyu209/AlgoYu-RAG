@@ -1,0 +1,360 @@
+[
+  {
+    "id": "v7-c001",
+    "split": "calibration",
+    "query": "无向图中 u 和 v 之间有两条平行边。DFS 从 u 沿其中一条树边进入 v 后，应如何识别需要跳过的父边反向弧？为什么不能直接跳过所有指向父顶点 u 的边，另一条平行边应如何参与 low 的更新？",
+    "relevant": [
+      {
+        "document": "bridge",
+        "heading": "父边编号",
+        "evidence": [
+          "无向图每条原边存两条有向弧，弧编号互为 id^1。",
+          "DFS 时跳过父边对应的反向弧，而非跳过所有通往父顶点的边。",
+          "两条平行边中另一条仍是回边，必须参与 low 更新。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-c002",
+    "split": "calibration",
+    "query": "A suffix-automaton state v has len[v]=10 and len[link[v]]=6. What does len[v] represent, which substring lengths belong to this state, and how much does this state contribute to the total number of distinct nonempty substrings?",
+    "relevant": [
+      {
+        "document": "sam",
+        "heading": "状态长度区间",
+        "evidence": [
+          "后缀自动机中 len[v] 是状态 v 表示的最长子串长度。",
+          "该状态表示的不同长度范围为 len[link[v]]+1 到 len[v]。",
+          "不同非空子串总数等于对所有非根状态求和 len[v]-len[link[v]]。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-c003",
+    "split": "calibration",
+    "query": "倍增祖先表中的 up[v][j] 表示什么，如何由前一层递推得到？对于根以上不存在的祖先，应统一使用什么值并如何定义该值的祖先表，才能避免负下标？预处理复杂度是多少？",
+    "relevant": [
+      {
+        "document": "lca",
+        "heading": "祖先表",
+        "evidence": [
+          "up[v][j]=up[up[v][j-1]][j-1]，表示 v 向上 2^j 步的祖先。",
+          "根的不存在祖先统一使用哨兵 0，令 up[0][j]=0，避免访问负下标。",
+          "预处理 O(n log n)。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-c004",
+    "split": "calibration",
+    "query": "For a sliding window with i=12 and k=5, should a queue-front index of 7 be removed, and should an index of 8 be removed for being expired? State what the queue stores and explain why the complete scan takes O(n) time.",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "队列保存下标",
+        "evidence": [
+          "长度为 k 的滑动窗口从左向右移动，队列里保存原数组下标，而不是只保存数值。",
+          "队首下标小于 i-k+1 时已经离开当前窗口，应当删除。",
+          "每个下标至多入队和出队一次，总时间 O(n)。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-c005",
+    "split": "calibration",
+    "query": "当前序列已经按降序排列时，再调用 next_permutation 会返回什么，序列本身会变成什么？若要从最小排列开始枚举全部不同排列，初始化和 do-while 中处理序列、调用函数的顺序应如何安排？",
+    "relevant": [
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "若已经是最大的降序排列，它返回 false，并把序列重排为最小的升序排列。",
+          "要从最小到最大枚举所有不同排列，应先排序，然后用 do-while 先处理初始序列，再调用 next_permutation。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-c006",
+    "split": "calibration",
+    "query": "Compare merging x≡1 (mod 6) with x≡4 (mod 10), and merging x≡1 (mod 6) with x≡5 (mod 10). Which pair is compatible, what divisibility test decides this, and why is directly applying an ordinary coprime CRT formula unjustified here?",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 1 页",
+        "evidence": [
+          "合并 x≡a (mod m) 与 x≡b (mod n)，先取 g=gcd(m,n)。",
+          "存在解的必要且充分条件是 (b-a) 能被 g 整除；否则两条同余式不相容。",
+          "不能在模数不互质时直接套用要求逆元存在的普通互质 CRT 公式。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-c007",
+    "split": "calibration",
+    "query": "结合单调队列和坐标压缩资料回答：把原值 10、100、1000 压成 0、1、2 后，窗口最大值的大小比较还能使用这些编号吗？队列中应保存压缩编号还是原数组下标？此外，能否用编号差恢复原值之间的距离？",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "相等元素与压缩",
+        "evidence": [
+          "若用坐标压缩后的值比较大小，压缩必须保持大小关系，队列里保存的仍是原数组下标，不能用压缩编号代替下标。"
+        ]
+      },
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "把原值 10、100、1000 压成 0、1、2 后，相邻编号的差都是 1，原数之间的距离却不同。",
+          "压缩不能保存原始距离、长度或缺失整数。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-c008",
+    "split": "calibration",
+    "query": "Compare the upward jumps in binary-lifting LCA and heavy-light path queries. After LCA vertices have equal depth and remain different, what condition permits a simultaneous jump? In HLD, which endpoint is processed while chain tops differ, which interval is processed, and where does that endpoint move next? Give the stated query complexity of each method when HLD uses a segment tree.",
+    "relevant": [
+      {
+        "document": "lca",
+        "heading": "同步抬升",
+        "evidence": [
+          "否则按 j 从大到小检查，若 up[u][j]!=up[v][j]，同时抬升两点；结束后 parent[u] 即最近公共祖先。",
+          "一次查询 O(log n)。"
+        ]
+      },
+      {
+        "document": "hld",
+        "heading": "跨链跳跃",
+        "evidence": [
+          "查询 u 到 v 的路径时，只要 top[u]!=top[v]，先处理链顶深度较大的一端的区间 [dfn[top[u]],dfn[u]]，再令 u=parent[top[u]]。",
+          "每次跨越一条轻边，路径最多被拆为 O(log n) 段；配合线段树通常为 O(log^2 n)。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-c009",
+    "split": "calibration",
+    "query": "请给出后缀自动机求字典序第 k 小不同子串的完整算法，包括每个状态的子串数量 DP 转移、转移边的访问顺序，以及跳过一个分支时 k 的更新公式。",
+    "relevant": [],
+    "category": "near",
+    "reason": "sam 材料只说明状态长度区间、不同子串总数和 occ 的初始化与传播；十份来源均未提供第 k 小子串所需的 DP、分支顺序和 k 更新算法。"
+  },
+  {
+    "id": "v7-c010",
+    "split": "calibration",
+    "query": "Give complete HLD pseudocode for edge-weight path sums: specify how each edge is mapped to a vertex position and exactly which endpoint is excluded from the final same-chain interval to avoid counting the LCA's incoming edge.",
+    "relevant": [],
+    "category": "near",
+    "reason": "hld 材料提供重儿子、编号、子树区间和一般路径拆分规则，但没有规定边权映射方式或边权查询中排除 LCA 入边的区间调整；其他来源也未补充这些规则。"
+  },
+  {
+    "id": "v7-c011",
+    "split": "calibration",
+    "query": "如何为 HTTP/3 服务配置 TLS 证书自动轮换？请给出证书更新、连接处理和零停机部署的具体步骤。",
+    "relevant": [],
+    "category": "far",
+    "reason": "十份材料均讨论算法数据结构或排列与同余运算，没有 HTTP/3、TLS 证书管理或服务部署资料。"
+  },
+  {
+    "id": "v7-c012",
+    "split": "calibration",
+    "query": "Use only the binary-lifting LCA document. What formula counts distinct nonempty substrings from suffix-automaton state lengths, and which states are included in that sum?",
+    "documents": [
+      "lca"
+    ],
+    "relevant": [],
+    "category": "scope",
+    "reason": "允许使用的 lca 文档只有祖先表和最近公共祖先查询规则，不包含后缀自动机计数公式；该公式位于允许范围之外的 sam 文档。"
+  },
+  {
+    "id": "v7-h001",
+    "split": "heldout",
+    "query": "For a DFS tree edge u-v, compare low[v]=dfn[u] with low[v]=dfn[u]+1. Which case identifies a bridge? Explain what alternative route is absent when the bridge condition holds and why equality does not satisfy it.",
+    "relevant": [
+      {
+        "document": "bridge",
+        "heading": "桥的判据",
+        "evidence": [
+          "DFS 树边 u-v 在 low[v]>dfn[u] 时是桥，说明 v 子树没有回到 u 或更早祖先的替代路径。",
+          "判据是严格大于；low[v]==dfn[u] 表示还能回到 u，所以该树边不是桥。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-h002",
+    "split": "heldout",
+    "query": "有人把后缀自动机的克隆状态 occ 初始化为 1，认为创建一个状态就应增加一次文本出现。资料支持这种做法吗？请说明普通新状态和克隆状态各自的初值、最终传播 occ 的顺序与方向，并解释克隆为何不新增一个被扫描的文本位置。",
+    "relevant": [
+      {
+        "document": "sam",
+        "heading": "克隆计数",
+        "evidence": [
+          "每次扩展的新普通状态初始 occ=1，克隆状态初始 occ=0。",
+          "最后按 len 从大到小把 occ[v] 加给 occ[link[v]]，得到 endpos 出现次数。",
+          "克隆只是拆分等价类，不代表多扫描一个文本位置。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-h003",
+    "split": "heldout",
+    "query": "In an LCA query, the deeper vertex is first lifted to the other vertex's depth. What should happen if the vertices then coincide? Otherwise, in what order are jump levels checked, when do both vertices move, and which vertex is returned after that process?",
+    "relevant": [
+      {
+        "document": "lca",
+        "heading": "同步抬升",
+        "evidence": [
+          "先把较深的点抬到相同深度；若两点已经相同，该点就是 LCA。",
+          "否则按 j 从大到小检查，若 up[u][j]!=up[v][j]，同时抬升两点；结束后 parent[u] 即最近公共祖先。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-h004",
+    "split": "heldout",
+    "query": "求窗口最大值时，队尾已有值 9 的旧下标，新加入的元素值也为 9。队尾删除条件采用严格小于与小于等于时，对旧的相等元素分别怎样处理？两种写法是否都能求最大值，判断元素过期时必须依据什么？",
+    "relevant": [
+      {
+        "document": "queue",
+        "heading": "相等元素与压缩",
+        "evidence": [
+          "队尾使用严格小于号时，会保留相等值的多个下标；使用小于等于号时只保留较新的相等值。",
+          "两种写法都能求最大值，但过期判断必须依据真实位置。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-h005",
+    "split": "heldout",
+    "query": "When sorted input is [1,1,2], what distinct value sequences does repeated next_permutation enumerate, and why are there three rather than six? State both the worst-case cost of one call and the cost of outputting one complete permutation.",
+    "relevant": [
+      {
+        "document": "permutation",
+        "heading": "",
+        "evidence": [
+          "输入含重复值时，排序后反复调用 next_permutation 得到不同的值序列，不会把相同数值的两个副本视为可区分对象。",
+          "比如 [1,1,2] 的不同结果是 [1,1,2]、[1,2,1]、[2,1,1]，一共 3 个，而不是 6 个。",
+          "一次调用最坏 O(n)，输出每个完整排列本身也需要 O(n)。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-h006",
+    "split": "heldout",
+    "query": "两条同余式相容后，令 x=a+m*t，除以 g 后应求 t 关于哪个模数的同余？合并模数如何计算，代表解应规范化到哪个区间？若两个输入模数都能装入 64 位，是否就能保证合并计算不会溢出，材料要求如何处理整数范围？",
+    "relevant": [
+      {
+        "document": "crt",
+        "heading": "第 3 页",
+        "evidence": [
+          "相容时可令 x=a+m*t，把方程除以 g 后求 t 关于 n/g 的同余。",
+          "合并后的模数为 lcm(m,n)=m/g*n，代表解规范化到 [0,lcm)。",
+          "即使输入模数分别能装入 64 位，合并模数或中间乘法也可能溢出，必须根据范围使用更宽整数或可靠的大整数运算。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-h007",
+    "split": "heldout",
+    "query": "结合 mex 和坐标压缩资料：原集合 {10,100,1000} 压缩成 {0,1,2} 后，原集合与压缩集合的 mex 分别是多少，为什么不能把后者当作原集合答案？若动态维护的数据还含有重复值，删除一个副本时，计数发生什么变化才会改变该值是否缺失？",
+    "relevant": [
+      {
+        "document": "mex",
+        "heading": "00:00:01.500–00:00:28.500",
+        "evidence": [
+          "一个非负整数集合的 mex 是最小的没有出现的非负整数。",
+          "若输入是带重复值的多重集合，先维护每个值的出现次数，出现一次和出现多次都表示这个值已经存在。"
+        ]
+      },
+      {
+        "document": "mex",
+        "heading": "00:01:13.500–00:01:49.000",
+        "evidence": [
+          "动态插入或删除时，只有计数从 0 变 1 或从 1 变 0 才改变该值是否缺失。"
+        ]
+      },
+      {
+        "document": "coordinate",
+        "heading": "数值间距",
+        "evidence": [
+          "把原值 10、100、1000 压成 0、1、2 后，相邻编号的差都是 1，原数之间的距离却不同。",
+          "压缩不能保存原始距离、长度或缺失整数。",
+          "求原值集合的 mex 时，也不能直接把压缩后编号的第一个空缺当成原值答案。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-h008",
+    "split": "heldout",
+    "query": "Compare occurrence bookkeeping in the suffix automaton with modification bookkeeping in rollback union-find. Why does creating a clone not add one text occurrence, and what initial occ does it receive? For rollback union-find, what is recorded as a snapshot, how is it restored, and why can a merge of already-connected vertices omit an actual stack modification?",
+    "relevant": [
+      {
+        "document": "sam",
+        "heading": "克隆计数",
+        "evidence": [
+          "每次扩展的新普通状态初始 occ=1，克隆状态初始 occ=0。",
+          "克隆只是拆分等价类，不代表多扫描一个文本位置。"
+        ]
+      },
+      {
+        "document": "rollback",
+        "heading": "00:01:10.000–00:01:35.000",
+        "evidence": [
+          "进入某段离线搜索前记录修改栈的长度作为快照；退出时逐条撤销，恢复到这个栈长度。",
+          "两个点已在同一集合时可以不压入实际修改，快照按栈长度记录便不会把无变化的合并误算作一次需要撤销的改动。"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v7-h009",
+    "split": "heldout",
+    "query": "Using the supplied union-find subtitles, provide a persistent union-find implementation for online fully dynamic connectivity, including how arbitrary edge deletions are handled and the worst-case operation bounds.",
+    "relevant": [],
+    "category": "near",
+    "reason": "rollback 字幕仅说明可回滚并查集的修改栈、合并和快照撤销，并明确表示未展开可持久化并查集或在线全动态连通性；其他来源也没有相关实现、删边算法或复杂度保证。"
+  },
+  {
+    "id": "v7-h010",
+    "split": "heldout",
+    "query": "请给出可运行的 C++ 动态 mex 线段树实现，写明每个节点的字段、合并公式、插入和删除的最坏时间复杂度，以及删除一个不存在的值时接口应采用的行为。",
+    "relevant": [],
+    "category": "near",
+    "reason": "mex 材料只说明出现次数变化与缺失状态的关系，并概括可以使用维护缺失位置的结构；没有指定线段树节点、合并公式、代码、操作复杂度或删除不存在值的接口约定。"
+  },
+  {
+    "id": "v7-h011",
+    "split": "heldout",
+    "query": "请说明 JPEG 图像编码中量化表如何影响画质与文件大小，并给出为医学影像选择量化参数的具体依据。",
+    "relevant": [],
+    "category": "far",
+    "reason": "十份来源没有图像编码、JPEG 量化、画质评价或医学影像参数选择的资料。"
+  },
+  {
+    "id": "v7-h012",
+    "split": "heldout",
+    "query": "Use only the coordinate-compression and monotonic-queue documents. What is the compatibility condition for merging congruences with non-coprime moduli, and can two individually 64-bit moduli still overflow during the merge?",
+    "documents": [
+      "coordinate",
+      "queue"
+    ],
+    "relevant": [],
+    "category": "scope",
+    "reason": "允许使用的 coordinate 和 queue 文档不讨论同余合并的相容条件或整数溢出；这些内容位于允许范围之外的 crt 来源。"
+  }
+]

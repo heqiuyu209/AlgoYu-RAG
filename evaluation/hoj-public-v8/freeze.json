@@ -1,0 +1,16 @@
+{
+  "frozenAtUtc": "2026-10-24T12:17:50.507436+00:00",
+  "frozenBeforeFirstRanks": true,
+  "authoring": "fresh source-only child; no ranking or implementation read; parent exact-source validation only",
+  "parentPreRetrievalCorrections": "v8-c001 one missing closing math dollar restored to original source; no question/label group change",
+  "sourceType": "Three real CC BY-SA public algorithm articles; not private classroom media",
+  "files": {
+    "cases.json": "ed98a8f3e4624fe7e3e309704d1d68e5dc638732c07efa3236dacce0c1de0afe",
+    "documents.json": "428297085e9d339984a61592de3398016bb5c7843d147c23a8732989795eaa7f",
+    "provenance.json": "52f0836f7d4d35a4354f46c35e21452f40293a05a360b392adfe90b8ecdb3950",
+    "LICENSE": "bae5ccc863235f984a52c07d011e48a86c0c12f923be2dedd8624c7abdc22c6c",
+    "documents/linear_congruence_equation.md": "0328c9956fb4e584fff077d9edfa48279fd8a45a2e90233c87c5522055181f9b",
+    "documents/manacher.md": "7e6bf3c682643b544edee3407774119225b82154cada4211b5e54f759be24872",
+    "documents/sqrt_decomposition.md": "e7a114e4a129bf6d4298892a9a3ac059b9b07a9482c3b419e93bc3397695400a"
+  }
+}

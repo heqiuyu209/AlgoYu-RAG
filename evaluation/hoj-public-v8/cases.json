@@ -1,0 +1,270 @@
+[
+  {
+    "id": "v8-c001",
+    "split": "calibration",
+    "query": "回文子串在最坏情况下有二次多，Manacher 为什么仍能用线性时间处理？它实际保存什么信息，扩展操作的总成本又怎样控制？",
+    "relevant": [
+      {
+        "document": "manacher",
+        "heading": "More precise statement",
+        "evidence": [
+          "In the worst case string might have up to $O(n^2)$ palindromic substrings",
+          "for each position $i$ we will find the number of non-empty palindromes centered at this position.",
+          "Palindromes with a common center form a contiguous chain, that is if we have a palindrome of length $l$ centered in $i$, we also have palindromes of lengths $l-2$, $l-4$ and so on also centered in $i$."
+        ]
+      },
+      {
+        "document": "manacher",
+        "heading": "Complexity of Manacher's algorithm",
+        "evidence": [
+          "We can notice that every iteration of trivial algorithm increases $r$ by one. Also $r$ cannot be decreased during the algorithm. So, trivial algorithm will make $O(n)$ iterations in total.",
+          "Other parts of Manacher's algorithm work obviously in linear time. Thus, we get $O(n)$ time complexity."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-c002",
+    "split": "calibration",
+    "query": "In odd-length Manacher, why can copying the mirror radius fail when it reaches the enclosing palindrome's boundary, and which initialization in the supplied code handles that case?",
+    "relevant": [
+      {
+        "document": "manacher",
+        "heading": "Manacher's algorithm",
+        "evidence": [
+          "when the \"inner\" palindrome reaches the borders of the \"outer\" one, i. e. $j - d_{odd}[j] \\le l$ (or, which is the same, $i + d_{odd}[j] \\ge r$).",
+          "Because the symmetry outside the \"outer\" palindrome is not guaranteed, just assigning $d_{odd}[i] = d_{odd}[j]$ will be incorrect: we do not have enough data to state that the palindrome in the position $i$ has the same length.",
+          "Actually, we should restrict the length of our palindrome for now, i. e. assign $d_{odd}[i] = r - i$, to handle such situations correctly. After this we'll run the trivial algorithm which will try to increase $d_{odd}[i]$ while it's possible."
+        ]
+      },
+      {
+        "document": "manacher",
+        "heading": "Implementation of Manacher's algorithm",
+        "evidence": [
+          "if(i <= r) {\n            p[i] = min(r - i, p[l + (r - i)]);\n        }"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-c003",
+    "split": "calibration",
+    "query": "用分块做区间和时，如果左右端点落在同一块，还能套“两端零散元素加中间整块”的公式吗？应如何处理，通常的查询复杂度又来自哪里？",
+    "relevant": [
+      {
+        "document": "sqrt_decomposition",
+        "heading": "Description",
+        "evidence": [
+          "_Note: When $k = p$, i.e. $l$ and $r$ belong to the same block, the formula can't be applied, and the sum should be calculated trivially._",
+          "the size of each \"tail\" does not exceed the block length $s$, and the number of blocks in the sum does not exceed $s$. Since we have chosen $s \\approx \\sqrt n$, the total number of operations required to find the sum of elements on the interval $[l, r]$ is $O(\\sqrt n)$."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-c004",
+    "split": "calibration",
+    "query": "With square root decomposition, how does maintaining a block sum after a point update differ from maintaining its minimum or maximum, including the update costs?",
+    "relevant": [
+      {
+        "document": "sqrt_decomposition",
+        "heading": "Other problems",
+        "evidence": [
+          "If an element $a[i]$ changes, it's sufficient to update the value of $b[k]$ for the block to which this element belongs ($k = i / s$) in one operation:",
+          "$$ b[k] += a_{new}[i] - a_{old}[i] $$",
+          "If this problem has to address individual elements' updates as well, updating the value of $b[k]$ is also possible, but it will require iterating through all values of block $k$ in $O(s) = O(\\sqrt{n})$ operations."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-c005",
+    "split": "calibration",
+    "query": "解 a·x ≡ b (mod n) 时，如果 a 与 n 互质，怎样用模逆元求解，得到的解是否唯一？",
+    "relevant": [
+      {
+        "document": "linear_congruence",
+        "heading": "Solution by finding the inverse element",
+        "evidence": [
+          "Let us first consider a simpler case where $a$ and $n$ are **coprime** ($\\gcd(a, n) = 1$).\nThen one can find the [inverse](module-inverse.md) of $a$, and multiplying both sides of the equation with the inverse, and we can get a **unique** solution.",
+          "$$x \\equiv b \\cdot a ^ {- 1} \\pmod n$$"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-c006",
+    "split": "calibration",
+    "query": "为什么 b 不能被 gcd(a,n) 整除时，一次同余方程一定无解？用这个条件判断 2x ≡ 1 (mod 4)。",
+    "relevant": [
+      {
+        "document": "linear_congruence",
+        "heading": "Solution by finding the inverse element",
+        "evidence": [
+          "Then the solution will not always exist (for example $2 \\cdot x \\equiv 1 \\pmod 4$ has no solution).",
+          "Let $g = \\gcd(a, n)$",
+          "Then, if $b$ is not divisible by $g$, there is no solution. In fact, for any $x$ the left side of the equation $a \\cdot x \\pmod n$ , is always divisible by $g$, while the right-hand side is not divisible by it, hence it follows that there are no solutions."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-c007",
+    "split": "calibration",
+    "query": "怎样实现回文树的在线插入操作？请说明新建节点、寻找后缀链接的步骤，并证明连续追加字符时的总时间复杂度。",
+    "relevant": [],
+    "category": "near",
+    "reason": "资料只提到回文树又称 eertree，可用于处理回文问题，没有提供节点结构、在线插入、后缀链接构造或复杂度证明。"
+  },
+  {
+    "id": "v8-c008",
+    "split": "calibration",
+    "query": "请仅依据《Linear Congruence Equation》说明莫队算法为什么需要离线处理，以及区间查询应该怎样排序。",
+    "documents": [
+      "linear_congruence"
+    ],
+    "relevant": [],
+    "category": "scope",
+    "reason": "允许的资料仅为 linear_congruence，内容涉及一次同余方程、逆元和扩展欧几里得算法。莫队的离线要求与排序规则虽然出现在 sqrt_decomposition 中，但该文档被本题范围排除。"
+  },
+  {
+    "id": "v8-h001",
+    "split": "heldout",
+    "query": "How can I reuse an odd-length Manacher implementation to handle even-length palindromes, and how do the transformed array entries map back to d_odd and d_even?",
+    "relevant": [
+      {
+        "document": "manacher",
+        "heading": "Working with parities",
+        "evidence": [
+          "we can put an additional `#` character between each letter in the string and also in the beginning and the end of the string:",
+          "$d[2i]=2 d_{even}[i]+1$ and $d[2i+1]=2 d_{odd}[i]$ where $d$ denotes the Manacher array for odd-length palindromes in `#`-joined string, while $d_{odd}$ and $d_{even}$ correspond to the arrays defined above in the initial string."
+        ]
+      },
+      {
+        "document": "manacher",
+        "heading": "Working with parities",
+        "evidence": [
+          "Indeed, `#` characters do not affect the odd-length palindromes, which are still centered in the initial string's characters, but now even-length palindromes of the initial string are odd-length palindromes of the new string centered in `#` characters."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-h002",
+    "split": "heldout",
+    "query": "朴素奇数回文代码为什么要在字符串两端加上 $ 和 ^？返回数组时又怎样去掉这两个新增位置？",
+    "relevant": [
+      {
+        "document": "manacher",
+        "heading": "Trivial algorithm",
+        "evidence": [
+          "s = \"$\" + s + \"^\";",
+          "return vector<int>(begin(p) + 1, end(p) - 1);",
+          "Terminal characters `$` and `^` were used to avoid dealing with ends of the string separately."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-h003",
+    "split": "heldout",
+    "query": "For static range-mode queries, what makes Mo's approach useful when ordinary block summaries are hard to merge, and why does its range-maintenance strategy require offline queries?",
+    "relevant": [
+      {
+        "document": "sqrt_decomposition",
+        "heading": "Mo's algorithm",
+        "evidence": [
+          "During a normal sqrt decomposition, we have to precompute the answers for each block, and merge them during answering queries.",
+          "E.g. when each query asks to find the **mode** of its range (the number that appears the most often).\nFor this each block would have to store the count of each number in it in some sort of data structure, and we can no longer perform the merge step fast enough anymore."
+        ]
+      },
+      {
+        "document": "sqrt_decomposition",
+        "heading": "Mo's algorithm",
+        "evidence": [
+          "**Mo's algorithm** uses a completely different approach, that can answer these kind of queries fast, because it only keeps track of one data structure, and the only operations with it are easy and fast."
+        ]
+      },
+      {
+        "document": "sqrt_decomposition",
+        "heading": "Mo's algorithm",
+        "evidence": [
+          "When we want to answer the next query (in the special order), we simply extend or reduce the range, by adding/removing elements on both sides of the current range, until we transform it into the query range.",
+          "Since we change the order of answering the queries, this is only possible when we are allowed to answer the queries in offline mode."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-h004",
+    "split": "heldout",
+    "query": "数组只需要支持区间加和单点查询，分块的延迟增量应该存在哪里？整块和两端分别怎样更新，查询公式及两种操作的复杂度是什么？",
+    "relevant": [
+      {
+        "document": "sqrt_decomposition",
+        "heading": "Other problems",
+        "evidence": [
+          "Let's store the value which has to be added to all elements of block $k$ in $b[k]$ (initially all $b[k] = 0$).",
+          "During each \"add\" operation we need to add $\\delta$ to $b[k]$ for all blocks which belong to interval $[l, r]$ and to add $\\delta$ to $a[i]$ for all elements which belong to the \"tails\" of the interval.",
+          "The answer to query $i$ is simply $a[i] + b[i/s]$. This way \"add\" operation has $O(\\sqrt{n})$ complexity, and answering a query has $O(1)$ complexity."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-h005",
+    "split": "heldout",
+    "query": "For 6x ≡ 8 (mod 14), how do I reduce the equation, find a solution modulo the reduced modulus, and generate every solution in [0,13]? How many distinct solutions should there be?",
+    "relevant": [
+      {
+        "document": "linear_congruence",
+        "heading": "Solution by finding the inverse element",
+        "evidence": [
+          "Let $g = \\gcd(a, n)$",
+          "$$x \\equiv b \\cdot a ^ {- 1} \\pmod n$$"
+        ]
+      },
+      {
+        "document": "linear_congruence",
+        "heading": "Solution by finding the inverse element",
+        "evidence": [
+          "If $g$ divides $b$, then by dividing both sides of the equation by $g$ (i.e. dividing $a$, $b$ and $n$ by $g$), we receive a new equation:",
+          "in which $a^\\prime$ and $n^\\prime$ are already relatively prime, and we have already learned how to handle such an equation.\nWe get $x^\\prime$ as solution for $x$.",
+          "It can be shown that the original equation has exactly $g$ solutions, and they will look like this:\n\n$$x_i \\equiv (x^\\prime + i\\cdot n^\\prime) \\pmod n \\quad \\text{for } i = 0 \\ldots g-1$$"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-h006",
+    "split": "heldout",
+    "query": "To solve a·x ≡ b (mod n) with the extended Euclidean algorithm, what integer equation should I use, what extra unknown does it introduce, and how does recovering all its solutions relate to the inverse-based approach?",
+    "relevant": [
+      {
+        "document": "linear_congruence",
+        "heading": "Solution with the Extended Euclidean Algorithm",
+        "evidence": [
+          "We can rewrite the linear congruence to the following Diophantine equation:\n\n$$a \\cdot x + n \\cdot k = b,$$\n\nwhere $x$ and $k$ are unknown integers.",
+          "it consists of applying the [Extended Euclidean Algorithm](extended-euclid-algorithm.md).",
+          "It also describes the method of obtaining all solutions of this equation from one found solution, and incidentally this method, when carefully considered, is absolutely equivalent to the method described in the previous section."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "v8-h007",
+    "split": "heldout",
+    "query": "如果莫队查询之间穿插单点修改，怎样引入时间维度支持修改与撤销？请给出三维查询排序方式及相应的时间复杂度。",
+    "relevant": [],
+    "category": "near",
+    "reason": "资料介绍的是静态离线莫队，并明确指出该方法不能在两次查询之间更新值；没有介绍带修改莫队的时间维度、修改撤销、三维排序或复杂度分析。"
+  },
+  {
+    "id": "v8-h008",
+    "split": "heldout",
+    "query": "TCP 在拥塞避免阶段怎样调整拥塞窗口？超时和收到三个重复 ACK 时的处理有什么区别？",
+    "relevant": [],
+    "category": "far",
+    "reason": "三篇资料只覆盖回文算法、平方根分块及莫队、一次同余方程，不包含 TCP、拥塞窗口或网络重传机制的依据。"
+  }
+]

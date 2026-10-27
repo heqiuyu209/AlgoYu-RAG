@@ -1,0 +1,21 @@
+{
+  "createdAt": "2026-10-23T03:34:52.110325+00:00",
+  "provenance": "Independent source-only agent authored questions; same synthetic sources as v2/v3, not unseen documents or human-authored benchmark.",
+  "authorExposure": "No prior cases, rankings or retrieval implementation supplied to question author.",
+  "canonicalization": "CRT slug normalized to manifest id; video headings derived and exact time intervals verified before first ranking; no query/evidence changes.",
+  "threshold": 0.9,
+  "files": {
+    "cases.json": "10d71971a3358514993ce2e1d718ac219ab5751447ec318b9d4126ea39ff43ad",
+    "documents.json": "7a9d262a0560c9419ba83333a831f503ddcccf0387a99792c64bed70e5ccc540",
+    "documents/bridge.md": "dc4cb56b6a62212fe38e22b187da7d9eac382485f736a7c0463ec15f42a73ce1",
+    "documents/hld.md": "f14fb208aed4fa69bfc0c649fa94b0164562f7c8eef9166a71788118582afe67",
+    "documents/lca.md": "37eb955902b5edb7e66db2cd0c3900e96c9a2120b0150f91dbd6a55297ad2ece",
+    "documents/sam.md": "f8c7e26bb9731b83ab66875ff5a7efe82e7bdaaeada424973cbbf4c841d9b579",
+    "documents/queue.md": "c6c5e7a8a19287a60b2dde25b549c5363cda665461fdbfffcf1a6d2bb5b9c410",
+    "documents/coordinate.md": "d306fc13a7b4ef602d9a746d1fc9ea62d9eaaae8a9b901fbf29f9e1b51a5ffc1",
+    "documents/permutation.txt": "9dcc80ee8aa5370d5a9c677a1d4f96f1c09050531d33a74a28e54c9317ddc3fc",
+    "documents/crt.pages.txt": "5b417f8a393f28c416212d76c111dd59adc3b2593f0beb546d0dfc1a71b93c02",
+    "documents/rollback.json": "746971765ca1ea0bbfdd3c6ed6a6350db6dbe75118cd8bb21580bd49a2efa851",
+    "documents/mex.json": "ac98329bcaacdcd12795ec94877a450b55545690397fabe062c7ebf06b29ba2a"
+  }
+}

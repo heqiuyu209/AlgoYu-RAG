@@ -1,0 +1,2 @@
+# Frozen evaluation hashes cover original bytes, including existing mixed line endings.
+evaluation/** -text

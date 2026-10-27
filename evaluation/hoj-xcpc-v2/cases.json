@@ -1,0 +1,926 @@
+[
+  {
+    "id": "sparse-c1",
+    "split": "calibration",
+    "query": "min(st[l][k], st[r-2^k+1][k]) 为什么可以用重叠区间？",
+    "relevant": [
+      {
+        "document": "sparse",
+        "heading": "重叠查询",
+        "evidence": [
+          "幂等",
+          "O(1)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sparse-h1",
+    "split": "heldout",
+    "query": "做完预处理后不再改数组，能否用两个长度为二次幂的段常数时间求最小值？",
+    "relevant": [
+      {
+        "document": "sparse",
+        "heading": "重叠查询",
+        "evidence": [
+          "幂等",
+          "O(1)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sparse-c2",
+    "split": "calibration",
+    "query": "Sparse Table 把 min 换成 sum 为何错误？",
+    "relevant": [
+      {
+        "document": "sparse",
+        "heading": "求和反例",
+        "evidence": [
+          "重复累加",
+          "前缀和"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sparse-h2",
+    "split": "heldout",
+    "query": "相加时重叠的元素算了两遍，静态区间总和应该换用什么？",
+    "relevant": [
+      {
+        "document": "sparse",
+        "heading": "求和反例",
+        "evidence": [
+          "重复累加",
+          "前缀和"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "scc-c1",
+    "split": "calibration",
+    "query": "in_stack[v] 为真时用 dfn[v] 还是 low[v] 更新 Tarjan？",
+    "relevant": [
+      {
+        "document": "scc",
+        "heading": "栈内回边",
+        "evidence": [
+          "dfn[v]",
+          "已弹栈顶点不能"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "scc-h1",
+    "split": "heldout",
+    "query": "已经归入旧强连通块并弹栈的点，还能把当前回溯值压低吗？",
+    "relevant": [
+      {
+        "document": "scc",
+        "heading": "栈内回边",
+        "evidence": [
+          "dfn[v]",
+          "已弹栈顶点不能"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "scc-c2",
+    "split": "calibration",
+    "query": "low[u]==dfn[u] 触发什么出栈规则？",
+    "relevant": [
+      {
+        "document": "scc",
+        "heading": "分量出口",
+        "evidence": [
+          "直至 u",
+          "有向无环图"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "scc-h2",
+    "split": "heldout",
+    "query": "有向图把相互可达的点合并以后，缩点图还会有有向环吗？",
+    "relevant": [
+      {
+        "document": "scc",
+        "heading": "分量出口",
+        "evidence": [
+          "直至 u",
+          "有向无环图"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bridge-c1",
+    "split": "calibration",
+    "query": "桥算法中为什么用 id^1 而不是 v==parent？",
+    "relevant": [
+      {
+        "document": "bridge",
+        "heading": "父边编号",
+        "evidence": [
+          "反向弧",
+          "另一条仍是回边"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bridge-h1",
+    "split": "heldout",
+    "query": "父子之间有两条边，删掉一条仍连通，怎样避免把它错判成桥？",
+    "relevant": [
+      {
+        "document": "bridge",
+        "heading": "父边编号",
+        "evidence": [
+          "反向弧",
+          "另一条仍是回边"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bridge-c2",
+    "split": "calibration",
+    "query": "low[v]>dfn[u] 与 >= 的区别是什么？",
+    "relevant": [
+      {
+        "document": "bridge",
+        "heading": "桥的判据",
+        "evidence": [
+          "严格大于",
+          "不是桥"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bridge-h2",
+    "split": "heldout",
+    "query": "儿子的回溯值恰好等于父亲访问序号，删除父子树边会断开吗？",
+    "relevant": [
+      {
+        "document": "bridge",
+        "heading": "桥的判据",
+        "evidence": [
+          "严格大于",
+          "不是桥"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hld-c1",
+    "split": "calibration",
+    "query": "重链剖分的子树区间 dfn[u]+size[u]-1 从何而来？",
+    "relevant": [
+      {
+        "document": "hld",
+        "heading": "重儿子与编号",
+        "evidence": [
+          "最大",
+          "连续区间"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hld-h1",
+    "split": "heldout",
+    "query": "为什么遍历时先访问最大子树儿子，链和子树各对应什么线性区间？",
+    "relevant": [
+      {
+        "document": "hld",
+        "heading": "重儿子与编号",
+        "evidence": [
+          "最大",
+          "连续区间"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hld-c2",
+    "split": "calibration",
+    "query": "top[u]!=top[v] 时应该跳较深还是较浅的链顶？",
+    "relevant": [
+      {
+        "document": "hld",
+        "heading": "跨链跳跃",
+        "evidence": [
+          "深度较大",
+          "O(log^2 n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hld-h2",
+    "split": "heldout",
+    "query": "树上路径修改用线段树维护，为什么复杂度通常多出一个对数？",
+    "relevant": [
+      {
+        "document": "hld",
+        "heading": "跨链跳跃",
+        "evidence": [
+          "深度较大",
+          "O(log^2 n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "lca-c1",
+    "split": "calibration",
+    "query": "up[v][j] 的倍增递推是什么？",
+    "relevant": [
+      {
+        "document": "lca",
+        "heading": "祖先表",
+        "evidence": [
+          "up[up[v][j-1]][j-1]",
+          "up[0][j]=0"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "lca-h1",
+    "split": "heldout",
+    "query": "祖先表碰到根以后，怎样用零号哨兵避免数组越界？",
+    "relevant": [
+      {
+        "document": "lca",
+        "heading": "祖先表",
+        "evidence": [
+          "up[up[v][j-1]][j-1]",
+          "up[0][j]=0"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "lca-c2",
+    "split": "calibration",
+    "query": "LCA 同深度后为什么从大到小同步跳？",
+    "relevant": [
+      {
+        "document": "lca",
+        "heading": "同步抬升",
+        "evidence": [
+          "已经相同",
+          "O(log n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "lca-h2",
+    "split": "heldout",
+    "query": "一个点本来就是另一个的祖先，补齐深度后可以直接返回吗？",
+    "relevant": [
+      {
+        "document": "lca",
+        "heading": "同步抬升",
+        "evidence": [
+          "已经相同",
+          "O(log n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aho-c1",
+    "split": "calibration",
+    "query": "AC 自动机 fail[v] 的后缀含义是什么，为什么用 BFS 建立？",
+    "relevant": [
+      {
+        "document": "aho",
+        "heading": "失配链接",
+        "evidence": [
+          "最长真后缀",
+          "BFS"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aho-h1",
+    "split": "heldout",
+    "query": "字典树无法继续读当前字符时，应根据哪种后缀状态继续匹配？",
+    "relevant": [
+      {
+        "document": "aho",
+        "heading": "失配链接",
+        "evidence": [
+          "最长真后缀",
+          "BFS"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aho-c2",
+    "split": "calibration",
+    "query": "visit[fail[v]]+=visit[v] 应正序还是逆 BFS 序？",
+    "relevant": [
+      {
+        "document": "aho",
+        "heading": "出现次数传播",
+        "evidence": [
+          "逆序",
+          "各模式 ID"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aho-h2",
+    "split": "heldout",
+    "query": "重复模式和作为别的模式后缀的词，怎样分别输出正确的出现次数？",
+    "relevant": [
+      {
+        "document": "aho",
+        "heading": "出现次数传播",
+        "evidence": [
+          "逆序",
+          "各模式 ID"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "z-c1",
+    "split": "calibration",
+    "query": "z[i]=min(r-i+1,z[i-l]) 之后为什么还要扩展？",
+    "relevant": [
+      {
+        "document": "z",
+        "heading": "匹配区间",
+        "evidence": [
+          "再向右",
+          "O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "z-h1",
+    "split": "heldout",
+    "query": "每个位置都在试公共前缀，为何 Z 函数不是平方时间？",
+    "relevant": [
+      {
+        "document": "z",
+        "heading": "匹配区间",
+        "evidence": [
+          "再向右",
+          "O(n)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "z-c2",
+    "split": "calibration",
+    "query": "p + sep + t 中 sep 能任意选吗？",
+    "relevant": [
+      {
+        "document": "z",
+        "heading": "分隔符条件",
+        "evidence": [
+          "不在",
+          "整数序列"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "z-h2",
+    "split": "heldout",
+    "query": "输入可能含全部普通字符，用 Z 匹配时怎样避免分隔符与正文相撞？",
+    "relevant": [
+      {
+        "document": "z",
+        "heading": "分隔符条件",
+        "evidence": [
+          "不在",
+          "整数序列"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sam-c1",
+    "split": "calibration",
+    "query": "sum(len[v]-len[link[v]]) 统计的是什么？",
+    "relevant": [
+      {
+        "document": "sam",
+        "heading": "状态长度区间",
+        "evidence": [
+          "len[link[v]]+1",
+          "不同非空子串"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sam-h1",
+    "split": "heldout",
+    "query": "一个 SAM 状态对应多少种长度的子串，最短长度由谁决定？",
+    "relevant": [
+      {
+        "document": "sam",
+        "heading": "状态长度区间",
+        "evidence": [
+          "len[link[v]]+1",
+          "不同非空子串"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sam-c2",
+    "split": "calibration",
+    "query": "SAM clone 的 occ 初值为什么是 0？",
+    "relevant": [
+      {
+        "document": "sam",
+        "heading": "克隆计数",
+        "evidence": [
+          "occ=0",
+          "从大到小"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sam-h2",
+    "split": "heldout",
+    "query": "后缀链接上的出现次数应从短串推向长串，还是从长串传回短串？",
+    "relevant": [
+      {
+        "document": "sam",
+        "heading": "克隆计数",
+        "evidence": [
+          "occ=0",
+          "从大到小"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hash-c1",
+    "split": "calibration",
+    "query": "H[r]-H[l-1]*powB[r-l+1] 的指数为什么是 r-l+1？",
+    "relevant": [
+      {
+        "document": "hash",
+        "heading": "子串公式",
+        "evidence": [
+          "长度相等",
+          "非负值"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hash-h1",
+    "split": "heldout",
+    "query": "两个区间哈希相同之前，还应该先比较什么，负余数如何处理？",
+    "relevant": [
+      {
+        "document": "hash",
+        "heading": "子串公式",
+        "evidence": [
+          "长度相等",
+          "非负值"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hash-c2",
+    "split": "calibration",
+    "query": "双哈希是否能完全消灭碰撞？",
+    "relevant": [
+      {
+        "document": "hash",
+        "heading": "碰撞不是证明",
+        "evidence": [
+          "不能",
+          "最终比较原串"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hash-h2",
+    "split": "heldout",
+    "query": "题目要求确定性地判断字符串相等，可以仅凭两组摘要相同下结论吗？",
+    "relevant": [
+      {
+        "document": "hash",
+        "heading": "碰撞不是证明",
+        "evidence": [
+          "不能",
+          "最终比较原串"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "digit-c1",
+    "split": "calibration",
+    "query": "数位 DP 的 tight=false 状态为何可复用？",
+    "relevant": [
+      {
+        "document": "digit",
+        "heading": "前导零与上界",
+        "evidence": [
+          "不再 tight",
+          "前导零通常不计"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "digit-h1",
+    "split": "heldout",
+    "query": "枚举前面补出来的零时，应不应该把它算成数字零的一次出现？",
+    "relevant": [
+      {
+        "document": "digit",
+        "heading": "前导零与上界",
+        "evidence": [
+          "不再 tight",
+          "前导零通常不计"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "digit-c2",
+    "split": "calibration",
+    "query": "F(R)-F(L-1) 在 L=0 时要注意什么？",
+    "relevant": [
+      {
+        "document": "digit",
+        "heading": "区间与零",
+        "evidence": [
+          "x<0 时返回 0",
+          "代表整数 0"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "digit-h2",
+    "split": "heldout",
+    "query": "整条搜索路径都没有填非零位，为什么还可能对应一个合法整数？",
+    "relevant": [
+      {
+        "document": "digit",
+        "heading": "区间与零",
+        "evidence": [
+          "x<0 时返回 0",
+          "代表整数 0"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "zeroone-c1",
+    "split": "calibration",
+    "query": "0-1 BFS 的 push_front 与 push_back 分别对应什么边权？",
+    "relevant": [
+      {
+        "document": "zeroone",
+        "heading": "双端队列",
+        "evidence": [
+          "push_front",
+          "push_back"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "zeroone-h1",
+    "split": "heldout",
+    "query": "路径里有免费边和花费一的边，怎样用双端队列避免普通堆？",
+    "relevant": [
+      {
+        "document": "zeroone",
+        "heading": "双端队列",
+        "evidence": [
+          "push_front",
+          "push_back"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "zeroone-c2",
+    "split": "calibration",
+    "query": "0-1 BFS 可以第一次入队就永久 visited 吗？",
+    "relevant": [
+      {
+        "document": "zeroone",
+        "heading": "松弛与限制",
+        "evidence": [
+          "更小距离",
+          "权重 2"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "zeroone-h2",
+    "split": "heldout",
+    "query": "现在图里出现一条权重为二的边，原来那套双端队列处理还能直接保证正确吗？",
+    "relevant": [
+      {
+        "document": "zeroone",
+        "heading": "松弛与限制",
+        "evidence": [
+          "更小距离",
+          "权重 2"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mitm-c1",
+    "split": "calibration",
+    "query": "n=40，数值太大不能按容量 DP，Meet-in-the-middle 如何分解状态？",
+    "relevant": [
+      {
+        "document": "mitm",
+        "heading": "两半枚举",
+        "evidence": [
+          "2^(n/2)",
+          "空间"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mitm-h1",
+    "split": "heldout",
+    "query": "一共四十个数，直接列出所有子集太多，可以各枚举多大的两个集合？",
+    "relevant": [
+      {
+        "document": "mitm",
+        "heading": "两半枚举",
+        "evidence": [
+          "2^(n/2)",
+          "空间"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mitm-c2",
+    "split": "calibration",
+    "query": "折半搜索计数 a+b=T 时重复和如何处理？",
+    "relevant": [
+      {
+        "document": "mitm",
+        "heading": "组合计数",
+        "evidence": [
+          "出现次数相乘",
+          "逐项二分"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mitm-h2",
+    "split": "heldout",
+    "query": "只想找不超过目标的最大子集和，而不是计算方案数量，应怎样组合两边结果？",
+    "relevant": [
+      {
+        "document": "mitm",
+        "heading": "组合计数",
+        "evidence": [
+          "出现次数相乘",
+          "逐项二分"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unsupported-1",
+    "split": "calibration",
+    "query": "Sparse Table 的 Disjoint 版本全部构造代码怎么写？",
+    "category": "near",
+    "reason": "讲义明确不展开 Disjoint Sparse Table 构造，不能由其名称推导完整代码。",
+    "documents": [
+      "sparse"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-2",
+    "split": "heldout",
+    "query": "SAM 状态怎样维护任意子串的字典序第 k 小？",
+    "category": "near",
+    "reason": "仅讲长度区间和出现次数，未给字典序选择算法。",
+    "documents": [
+      "sam"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-3",
+    "split": "calibration",
+    "query": "AC 自动机动态插入模式，怎样在线删除和回滚？",
+    "category": "near",
+    "reason": "资料只讲静态建树与出现次数，不含动态增删。",
+    "documents": [
+      "aho"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-4",
+    "split": "heldout",
+    "query": "树链剖分如何处理动态 link 和 cut？",
+    "category": "near",
+    "reason": "资料只讲静态树分解，不含动态树。",
+    "documents": [
+      "hld"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-5",
+    "split": "calibration",
+    "query": "数位 DP 的矩阵快速幂转移如何完整构造？",
+    "category": "near",
+    "reason": "资料不含矩阵加速与状态机乘法。",
+    "documents": [
+      "digit"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-6",
+    "split": "heldout",
+    "query": "Tarjan 如何在线维护每次加边后的所有强连通分量？",
+    "category": "near",
+    "reason": "资料为离线 DFS，不含增量 SCC。",
+    "documents": [
+      "scc"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-7",
+    "split": "calibration",
+    "query": "使用 FFT 做字符串通配匹配的误差证明是什么？",
+    "category": "near",
+    "reason": "资料是滚动哈希，不含 FFT。",
+    "documents": [
+      "hash"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-8",
+    "split": "heldout",
+    "query": "用桥树回答边双连通分量之间的距离，具体怎么建树？",
+    "category": "near",
+    "reason": "资料只讲桥判定与重边，不含桥树构建。",
+    "documents": [
+      "bridge"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-9",
+    "split": "calibration",
+    "query": "本队下周的集训签到时间与教室是什么？",
+    "category": "far",
+    "reason": "算法讲义没有现实训练安排。",
+    "relevant": []
+  },
+  {
+    "id": "unsupported-10",
+    "split": "heldout",
+    "query": "老师私下保存的考试答案和联系方式是什么？",
+    "category": "far",
+    "reason": "资料没有私有答案或个人联系方式。",
+    "relevant": []
+  },
+  {
+    "id": "unsupported-11",
+    "split": "calibration",
+    "query": "这个模型当前还剩多少付费额度？",
+    "category": "far",
+    "reason": "内部算法资料没有用户账户和计费数据。",
+    "relevant": []
+  },
+  {
+    "id": "unsupported-12",
+    "split": "heldout",
+    "query": "请播放昨天的课程录屏并总结老师的原话。",
+    "category": "far",
+    "reason": "本数据集没有音视频或逐字稿，不能假称看过录屏。",
+    "relevant": []
+  },
+  {
+    "id": "unsupported-13",
+    "split": "calibration",
+    "query": "0-1 BFS 的零权边应该放到队首还是队尾？",
+    "category": "scope",
+    "reason": "已选资料只有倍增 LCA，不包含零一 BFS。",
+    "documents": [
+      "lca"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-14",
+    "split": "heldout",
+    "query": "字符串 H[r]-H[l-1]*powB[r-l+1] 要如何规范负余数？",
+    "category": "scope",
+    "reason": "选定的折半搜索资料没有滚动哈希公式。",
+    "documents": [
+      "mitm"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-15",
+    "split": "calibration",
+    "query": "AC 自动机为什么要逆 BFS 序累加出现次数？",
+    "category": "scope",
+    "reason": "选定范围只有 Sparse Table，没有 AC 自动机。",
+    "documents": [
+      "sparse"
+    ],
+    "relevant": []
+  },
+  {
+    "id": "unsupported-16",
+    "split": "heldout",
+    "query": "集合为空时请直接搜索全部文档给出 SAM 计数公式。",
+    "category": "scope",
+    "reason": "显式空范围必须没有结果，即便问题指向库内已有知识。",
+    "documents": [],
+    "relevant": []
+  },
+  {
+    "id": "compare-calibration",
+    "split": "calibration",
+    "query": "静态最小值能取两个重叠块，字符串双哈希却不能严格证明相等，这两种保证分别是什么？",
+    "relevant": [
+      {
+        "document": "sparse",
+        "heading": "重叠查询",
+        "evidence": [
+          "幂等"
+        ]
+      },
+      {
+        "document": "hash",
+        "heading": "碰撞不是证明",
+        "evidence": [
+          "数学证明"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "compare-heldout",
+    "split": "heldout",
+    "query": "树上路径分段操作与倍增查询公共祖先，各自的对数复杂度是什么？",
+    "relevant": [
+      {
+        "document": "hld",
+        "heading": "跨链跳跃",
+        "evidence": [
+          "O(log^2 n)"
+        ]
+      },
+      {
+        "document": "lca",
+        "heading": "同步抬升",
+        "evidence": [
+          "O(log n)"
+        ]
+      }
+    ]
+  }
+]

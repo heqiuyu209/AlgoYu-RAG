@@ -1,0 +1,88 @@
+{
+  "sources": {
+    "downloadedAtUtc": "2026-10-26T06:33:28.700624+00:00",
+    "sources": [
+      {
+        "id": "mit6006-bfs",
+        "title": "MIT 6.006 Lecture 13: Breadth-first search (BFS)",
+        "page": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/resources/mit6_006f11_lec13/",
+        "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/1208e162775f6f5cedfbb9f2b694ede0_MIT6_006F11_lec13.pdf",
+        "sourceSha256": "d10f747d886f4fa930d5cef470af7421a74877587276d45cbf2aa7e9fc43cd0c",
+        "bytes": 1586142,
+        "file": "mit6006-bfs.pdf"
+      },
+      {
+        "id": "mit6006-dfs",
+        "title": "MIT 6.006 Lecture 14: Depth-first search (DFS), topological sorting",
+        "page": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/resources/mit6_006f11_lec14/",
+        "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/e59f8a55929028498953691891229a17_MIT6_006F11_lec14.pdf",
+        "sourceSha256": "531c70ff75c9c892ea79b204021032d8a8310bd5444ce927d504bab07d42b3f3",
+        "bytes": 1681879,
+        "file": "mit6006-dfs.pdf"
+      }
+    ],
+    "attribution": "MIT OpenCourseWare, 6.006 Introduction to Algorithms, Fall 2011; Erik Demaine and Srini Devadas",
+    "license": "CC BY-NC-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "terms": "https://ocw.mit.edu/pages/privacy-and-terms-of-use/",
+    "purpose": "Noncommercial isolated retrieval evaluation; no model training, no business import",
+    "officialPublisherEndorsement": false,
+    "modelExecuted": false
+  },
+  "extraction": {
+    "extractedAtUtc": "2026-10-26T06:34:02.709944+00:00",
+    "modelExecuted": false,
+    "businessStorageAccessed": false,
+    "externalCalls": 0,
+    "documents": [
+      {
+        "id": "mit6006-bfs",
+        "sourceHash": "d10f747d886f4fa930d5cef470af7421a74877587276d45cbf2aa7e9fc43cd0c",
+        "pages": 7,
+        "parser": "pypdf-6.21.1",
+        "contentHash": "933e804f09240940869f4db7ee62f6436fb59f12aaee2853273187c5fe3e6bcb",
+        "characters": 4604,
+        "emptyPages": []
+      },
+      {
+        "id": "mit6006-dfs",
+        "sourceHash": "531c70ff75c9c892ea79b204021032d8a8310bd5444ce927d504bab07d42b3f3",
+        "pages": 7,
+        "parser": "pypdf-6.21.1",
+        "contentHash": "19e81d88db55893863fbd5c9e7179d2f91220b05fbb68acb91350c38d5b34b3e",
+        "characters": 3701,
+        "emptyPages": []
+      }
+    ]
+  },
+  "firstProjectUseOfDocuments": true,
+  "privateClassroomMaterial": false,
+  "realPublicUniversityLectureNotes": true,
+  "studentAuthoredQueries": false,
+  "instructorReviewedQuestions": false,
+  "sourceAuthorContext": "Fresh child; source text and rendered PDF pages only; no code/rank/history",
+  "materialChanges": "Canonical production PDF text extraction only; original PDFs unchanged",
+  "modelTraining": false,
+  "businessImport": false,
+  "frozenBeforeFirstRetrieval": true,
+  "authorDraftSha256": "2798cd558d5078796e4320dd080652f3eae8707c35cc93992e6c021cb3bfa755",
+  "authorPatchSha256": "04c9d043bcb44f6300b51fdc0666e4f09a80837ba308741700b65e9844a91d1c",
+  "preRetrievalAuthorEdits": {
+    "scope": "14 of 16 supported questions allow both lectures; two replacement questions require both lectures",
+    "retainedFilters": {
+      "v9-c001": "Outgoing-neighbor fact also appears in DFS page1; restrict BFS to avoid alternative-source ambiguity",
+      "v9-h003": "Question explicitly names the BFS frontier example"
+    },
+    "wordCounts": {
+      "method": "Whitespace split including symbols and repeated evidence",
+      "mit6006-bfs": 165,
+      "mit6006-dfs": 116
+    },
+    "preserved": "Other questions, six extraction observations, four negatives and language/split proportions unchanged; no implementation, ranks, models or tests read/executed"
+  },
+  "manualVisualChecks": [
+    "bfs pages5,6",
+    "dfs pages2,4,5"
+  ],
+  "visualReviewScope": "Both agents independently viewed selected original-page renders; no expert audit or whole-PDF formula completeness claim"
+}

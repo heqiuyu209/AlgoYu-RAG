@@ -1,0 +1,357 @@
+[
+  {
+    "id": "v9-c001",
+    "split": "calibration",
+    "query": "讲义中，顶点的有序对和无序对分别表示什么边？在有向图的邻接表里，Adj[u] 记录哪个方向的边？",
+    "documents": [
+      "mit6006-bfs"
+    ],
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 1 页",
+        "evidence": [
+          "ordered pair =⇒ directed edge of graph",
+          "unordered pair =⇒ undirected"
+        ]
+      },
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 3 页",
+        "evidence": [
+          "(u, v)\nare just outgoing edges if directed."
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-c002",
+    "split": "calibration",
+    "query": "用 Python 写邻接表时，讲义建议用什么容器组织邻居，顶点标签必须满足什么条件？",
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 3 页",
+        "evidence": [
+          "Ad j = dictionary of list/set values;",
+          "vertex = any hashable object"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-c003",
+    "split": "calibration",
+    "query": "BFS 的第 i 层为何能表示最少边数？找到目标后，怎样利用 parent 取出一条这样的最短路径？",
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 4 页",
+        "evidence": [
+          "vertices reachable by path of i edges but not fewer"
+        ]
+      },
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 6 页",
+        "evidence": [
+          "parent pointers form shortest-path tree",
+          "take v, parent[v], parent[parent[v]], etc., until s"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-c004",
+    "split": "calibration",
+    "query": "BFS 如何防止已经发现的顶点再次进入下一层？这怎样限制邻接表扫描次数，并得到扫描边的时间界？",
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 5 页",
+        "evidence": [
+          "if v not in level: # not yet seen",
+          "level[v] = i ♯ = level[u] + 1"
+        ]
+      },
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 6 页",
+        "evidence": [
+          "Adj[v] looped through only once",
+          "O(E) time"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-c005",
+    "split": "calibration",
+    "query": "BFS 用 level、DFS 用 parent 判断一个顶点是否访问过。两者分别在什么条件下接纳新邻居，又怎样在递归或继续搜索前标记它，以避免重复访问？",
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 5 页",
+        "evidence": [
+          "if v not in level: # not yet seen",
+          "level[v] = i"
+        ]
+      },
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 2 页",
+        "evidence": [
+          "if v not in parent:",
+          "parent [v] = s"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-c006",
+    "split": "calibration",
+    "query": "DFS 的树边、回边、前向边和交叉边，分别由什么父子或子树关系界定？",
+    "relevant": [
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 3 页",
+        "evidence": [
+          "back edge: to ancestor\nforward edge: to descendant",
+          "cross edge (to another subtree)\ntree edges (formed by parent)"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-c007",
+    "split": "calibration",
+    "query": "How can DFS decide whether a graph contains a cycle, and which temporary node marking helps recognize the relevant kind of edge?",
+    "relevant": [
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 3 页",
+        "evidence": [
+          "mark nodes for duration they are “on the\nstack”"
+        ]
+      },
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 4 页",
+        "evidence": [
+          "Graph G has a cycle ⇔ DFS has a back edge"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-c008",
+    "split": "calibration",
+    "query": "I have recorded vertices in the order their DFS calls finish. How does the lecture turn this sequence into a topological order?",
+    "relevant": [
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 5 页",
+        "evidence": [
+          "Reverse of DFSﬁnishing times",
+          "order.reverse()"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-c009",
+    "split": "calibration",
+    "query": "If graph edges carry different positive travel times, what change to this BFS code makes its reported levels equal the minimum total travel time, and what is the modified algorithm's running time?",
+    "relevant": [],
+    "category": "near",
+    "reason": "讲义只说明 BFS 最小化路径的边数，没有给出正权边下的算法改造、相应数据结构或改造后的复杂度。不能把无权图结论直接当作所问的加权路径结论。"
+  },
+  {
+    "id": "v9-c010",
+    "split": "calibration",
+    "query": "According to these lecture notes, what does Adj[u] contain in a directed graph?",
+    "documents": [],
+    "relevant": [],
+    "category": "scope",
+    "reason": "documents 为空，没有任何允许使用的文档。虽然两份讲义都介绍了有向图邻接表，但这些来源均被本题的来源范围排除。"
+  },
+  {
+    "id": "v9-h001",
+    "split": "heldout",
+    "query": "讲义中的关联表（incidence lists）里，u.edges 存放什么？这种表示对保存边的数据有什么好处？",
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 4 页",
+        "evidence": [
+          "u.edges = list of (outgoing) edges from u.",
+          "advantage: store edge data without hashing"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-h002",
+    "split": "heldout",
+    "query": "把口袋魔方视为配置图时，什么对应顶点、什么对应边，为什么它是无向图？",
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 2 页",
+        "evidence": [
+          "vertex for each possible state\n• edge for each basic move",
+          "undirected: moves are reversible"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-h003",
+    "split": "heldout",
+    "query": "BFS 示例里为什么第三层 frontier 只有 f 和 v，没有把已经出现过的 x、c、d 再收进来？请结合代码解释。",
+    "documents": [
+      "mit6006-bfs"
+    ],
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 5 页",
+        "evidence": [
+          "frontier3  = {f, v}\n(not x, c, d)",
+          "if v not in level: # not yet seen"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-h004",
+    "split": "heldout",
+    "query": "不预存整个魔方配置图时，隐式图怎样提供邻居？讲义为何把这种图表示的存储空间称作“Zero”？",
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 3 页",
+        "evidence": [
+          "Adj(u) is a function — compute local structure on the ﬂy",
+          "This requires\n“Zero” Space."
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-h005",
+    "split": "heldout",
+    "query": "在任务调度的图模型里，顶点和边各代表什么？一个任务满足什么入边条件时，能被安排在开头？",
+    "relevant": [
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 4 页",
+        "evidence": [
+          "vertices represent tasks & edges represent\ndependencies"
+        ]
+      },
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 5 页",
+        "evidence": [
+          "Source = vertex with no incoming edges",
+          "= schedulable at beginning"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-h006",
+    "split": "heldout",
+    "query": "讲义对无向图的 DFS 边分类作了什么简化？是否仍需要保留全部四种类型？",
+    "relevant": [
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 3 页",
+        "evidence": [
+          "only tree and back edges in undirected graph"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-h007",
+    "split": "heldout",
+    "query": "In the two lectures' time analyses, where does the V term come from when BFS must also list unreachable vertices, and when DFS explores the entire graph? State the resulting total bound for each.",
+    "relevant": [
+      {
+        "document": "mit6006-bfs",
+        "heading": "第 6 页",
+        "evidence": [
+          "O(V + E) (“LINEAR TIME”) to also list vertices unreachable",
+          "those still not\nassigned level"
+        ]
+      },
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 2 页",
+        "evidence": [
+          "for s in V:"
+        ]
+      },
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 3 页",
+        "evidence": [
+          "DFS outer loop adds just O(V )",
+          "O(V + E) time (linear time)"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-h008",
+    "split": "heldout",
+    "query": "In the topological-sort correctness argument, suppose (u, v) is an edge but v is visited before u. Why must v finish before the visit to u begins?",
+    "relevant": [
+      {
+        "document": "mit6006-dfs",
+        "heading": "第 6 页",
+        "evidence": [
+          "– graph is acyclic\n– =⇒ u cannot be reached from v",
+          "– =⇒ visit to v ﬁnishes before visiting u"
+        ]
+      }
+    ],
+    "category": "answerable"
+  },
+  {
+    "id": "v9-h009",
+    "split": "heldout",
+    "query": "What memory-reclamation barriers should a concurrent Java garbage collector use while mutator threads are changing the object graph?",
+    "relevant": [],
+    "category": "far",
+    "reason": "BFS 讲义只把垃圾回收列为图搜索应用，没有讨论 Java、并发修改、内存回收屏障或并发垃圾收集器协议；DFS 讲义也不提供这些内容。"
+  },
+  {
+    "id": "v9-h010",
+    "split": "heldout",
+    "query": "Using only the allowed lecture, explain why reversing DFS finishing times yields a topological ordering of a DAG.",
+    "documents": [
+      "mit6006-bfs"
+    ],
+    "relevant": [],
+    "category": "scope",
+    "reason": "允许范围仅包含 BFS 讲义，其中没有 DFS 完成次序的拓扑排序方法或正确性证明。所需内容在被排除的 DFS 讲义第 5—6 页。"
+  }
+]

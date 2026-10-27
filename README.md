@@ -4,6 +4,8 @@
 > **Status:** Stable
 > **Tests:** 135 passed
 
+HOJ integration work is tracked separately in [the internal adapter guide](docs/hoj-integration.md). It does not expose the personal CLI or model configuration to HOJ users; the historical count above is not an integration test result.
+
 ---
 
 ## 1. Architecture Overview

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "manacher",
+    "title": "Manacher's algorithm - Finding all sub-palindromes in O(N)",
+    "format": "markdown",
+    "file": "documents/manacher.md"
+  },
+  {
+    "id": "sqrt_decomposition",
+    "title": "Square Root Decomposition",
+    "format": "markdown",
+    "file": "documents/sqrt_decomposition.md"
+  },
+  {
+    "id": "linear_congruence",
+    "title": "Linear Congruence Equation",
+    "format": "markdown",
+    "file": "documents/linear_congruence_equation.md"
+  }
+]
