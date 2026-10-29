@@ -7,10 +7,14 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
-from transformers import AutoTokenizer
 
 from learning_os.domain.exceptions import EmbeddingError
 from learning_os.hoj import onnx_embedder as module
+
+
+@pytest.fixture(autouse=True)
+def no_real_heap_release(monkeypatch):
+    monkeypatch.setattr(module, '_release_unused_cpu_pages', lambda: dict(status='unavailable', reason='test'))
 
 
 def test_both_graph_and_external_weight_bytes_are_verified(tmp_path, monkeypatch):
@@ -77,25 +81,30 @@ def test_cpu_session_configuration_and_interface(tmp_path, monkeypatch, invalid)
     monkeypatch.setitem(sys.modules, 'onnxruntime', runtime)
     monkeypatch.setattr(module, 'verify_assets', lambda *_: None)
 
-    def tokenizer(path, **kwargs):
-        assert kwargs == dict(local_files_only=True, trust_remote_code=False)
+    def tokenizer(path, kind):
+        assert kind == 'bge'
         return object()
 
-    monkeypatch.setattr(AutoTokenizer, 'from_pretrained', tokenizer)
+    monkeypatch.setattr(module, 'PinnedOnnxTokenizer', tokenizer)
     if invalid:
         with pytest.raises(ValueError, match='interface'):
             module.OnnxBGEM3Embedder(tmp_path, tmp_path / 'model.onnx')
     else:
         model = module.OnnxBGEM3Embedder(tmp_path, tmp_path / 'model.onnx')
         assert model.metadata['provider'] == 'CPUExecutionProvider'
+        assert model.metadata['documentBatchSize'] == 4
+        assert model.metadata['cpuMemoryArena'] is False
+        assert model.metadata['prepacking'] is False
         model.close()
         model.close()
         assert model.session is None and model.tokenizer is None
     options, providers = calls[0]
+    assert options.enable_cpu_mem_arena is False
     assert providers == ['CPUExecutionProvider'] and 'no-fallback' in calls
     assert options.intra_op_num_threads == 4 and options.inter_op_num_threads == 1
     assert options.execution_mode == 'sequential' and options.graph_optimization_level == 'extended'
-    assert options.entries == {'session.intra_op.allow_spinning': '0', 'optimization.enable_gelu_approximation': '0'}
+    assert options.entries == {'session.intra_op.allow_spinning': '0', 'optimization.enable_gelu_approximation': '0',
+                              'session.disable_prepacking': '1'}
 
 
 def fixture_model(invalid=None):
@@ -133,13 +142,26 @@ def test_document_batches_restore_original_order_and_match_query_path():
     texts = ['1', '12', '3', '123', '4', '15', '6', '17', '8', '19']
     vectors = model.embed(texts)
     assert [int(np.argmax(vector)) for vector in vectors] == [int(text) for text in texts]
-    assert [len(batch) for batch in calls] == [8, 2]
+    assert [len(batch) for batch in calls] == [4, 4, 2]
     assert [len(text) for batch in calls for text in batch] == sorted(map(len, texts), reverse=True)
     assert model.embed_query('12') == vectors[1]
+    assert calls[-1] == ['12']
     assert model.embed([]) == []
     model.close()
     with pytest.raises(EmbeddingError, match='closed'):
         model.embed_query('1')
+
+
+@pytest.mark.parametrize('scale', [1., 1e-14])
+def test_second_float32_normalization_matches_existing_torch_contract(scale):
+    import torch
+
+    model, _ = fixture_model()
+    vector = np.random.default_rng(20261028).normal(size=(1, 1024)).astype(np.float32) * np.float32(scale)
+    expected = torch.nn.functional.normalize(torch.from_numpy(vector.copy()), dim=1).numpy()
+    model.session = SimpleNamespace(run=lambda *_: [vector.copy()])
+    actual = np.asarray(model.embed_query('1'), dtype=np.float32)
+    np.testing.assert_allclose(actual, expected[0], rtol=2e-6, atol=5e-8)
 
 
 @pytest.mark.parametrize('invalid', ['mask', 'dtype', 'shape', 'nan', 'zero'])
@@ -149,11 +171,20 @@ def test_invalid_inputs_or_outputs_fail_without_fallback(invalid):
         model.embed_query('1')
 
 
-def test_close_waits_for_current_inference_then_prevents_new_calls():
+def test_close_waits_for_current_inference_then_prevents_new_calls(monkeypatch):
     model, _ = fixture_model()
     entered, release, closing, finished = (threading.Event() for _ in range(4))
     lock = threading.Lock()
     owner = []
+    releases = []
+
+    def release_pages():
+        assert release.is_set() and lock.locked()
+        assert model.session is None and model.tokenizer is None and model._closed
+        releases.append(True)
+        return dict(status='released_some')
+
+    monkeypatch.setattr(module, '_release_unused_cpu_pages', release_pages)
 
     class ObservedLock:
         def __enter__(self):
@@ -188,5 +219,40 @@ def test_close_waits_for_current_inference_then_prevents_new_calls():
         assert int(np.argmax(query.result(5))) == 1
         shutdown.result(5)
     assert finished.is_set() and model.session is None
+    model.close()
+    assert releases == [True]
     with pytest.raises(EmbeddingError, match='closed'):
         model.embed_query('1')
+
+
+def test_failed_release_keeps_encoder_closed_and_is_not_retried(monkeypatch):
+    model, _ = fixture_model()
+    releases = []
+    def release_pages():
+        assert model._closed and model.session is None and model.tokenizer is None
+        releases.append(True)
+        raise RuntimeError('release fixture')
+    monkeypatch.setattr(module, '_release_unused_cpu_pages', release_pages)
+    model.close()
+    model.close()
+    assert model._close_release == dict(status='failed', errorType='RuntimeError')
+    assert releases == [True]
+    with pytest.raises(EmbeddingError, match='closed'):
+        model.embed_query('1')
+
+
+def test_initialization_error_survives_failed_heap_cleanup(monkeypatch, tmp_path):
+    original = ValueError('original tokenizer initialization')
+    releases = []
+    monkeypatch.setitem(sys.modules, 'onnxruntime', SimpleNamespace())
+    monkeypatch.setattr(module, 'verify_assets', lambda *_: None)
+    def tokenizer(*args):
+        raise original
+    def release_pages():
+        releases.append(True)
+        raise RuntimeError('secondary cleanup failure')
+    monkeypatch.setattr(module, 'PinnedOnnxTokenizer', tokenizer)
+    monkeypatch.setattr(module, '_release_unused_cpu_pages', release_pages)
+    with pytest.raises(ValueError) as error:
+        module.OnnxBGEM3Embedder(tmp_path, tmp_path / 'unused.onnx')
+    assert error.value is original and releases == [True]

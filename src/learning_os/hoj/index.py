@@ -107,12 +107,20 @@ class KnowledgeIndex:
                                  models.FieldCondition(key="contentHash", match=models.MatchValue(value=ref.contentHash)),
                              ]) for ref in refs])
 
+    @property
+    def document_batch_size(self) -> int:
+        size = getattr(self.embedder, 'document_batch_size', 8)
+        if type(size) is not int or not 1 <= size <= 8:
+            raise ValueError('Document embedding batches must contain one to eight texts')
+        return size
+
     def vectors(self, texts: list[str], request: Ingest, input_hash: str, deadline: int) -> list[list[float]]:
         vectors = []
-        for start in range(0, len(texts), 8):
+        batch_size = self.document_batch_size
+        for start in range(0, len(texts), batch_size):
             with locked(self.lock, deadline):
                 self._require_writing(request, input_hash)
-            batch = texts[start:start + 8]
+            batch = texts[start:start + batch_size]
 
             def encode():
                 # A query can own the model while this batch waits. Revocation

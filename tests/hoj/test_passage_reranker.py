@@ -145,20 +145,27 @@ def test_foreign_candidate_is_rejected_before_classifier(indexed):
     assert error.value.code == 'INVALID_INDEX_RESULT'
 
 
-def test_classifier_cannot_publish_after_deadline(indexed):
+@pytest.mark.parametrize('past_boundary', [0, 1])
+def test_classifier_cannot_publish_after_deadline(indexed, monkeypatch, past_boundary):
+    from learning_os.hoj import auth
+
     index, request, _ = indexed
+    clock = [now_ms()]
+    monkeypatch.setattr(auth, 'now_ms', lambda: clock[0])
     entered, release = Event(), Event()
     def score(*args, **kwargs):
         entered.set()
         assert release.wait(5)
         return Scorer().score(*args, **kwargs)
     index.reranker = SimpleNamespace(score=score)
-    deadline = now_ms() + 500
+    deadline = clock[0] + 500
     with ThreadPoolExecutor(max_workers=1) as pool:
         pending = pool.submit(index.retrieve, request, deadline)
         try:
             assert entered.wait(2)
-            Event().wait(max(0, (deadline - now_ms()) / 1000) + .02)
+            # Expire after classifier entry without assuming CLOCK_REALTIME
+            # advances monotonically while a real-time sleep is in progress.
+            clock[0] = deadline + past_boundary
         finally:
             release.set()
         with pytest.raises(ServiceError) as error:

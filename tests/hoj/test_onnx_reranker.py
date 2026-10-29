@@ -75,7 +75,9 @@ def test_runtime_session_is_cpu_only_and_validates_the_pinned_interface(monkeypa
     else:
         model = module._OrtModel(tmp_path / 'fixture.onnx')
         assert model.metadata['provider'] == 'CPUExecutionProvider'
+        assert model.metadata['cpuMemoryArena'] is False
     options, providers = calls[1]
+    assert options.enable_cpu_mem_arena is False
     assert providers == ['CPUExecutionProvider'] and 'fallback-disabled' in calls
     assert options.intra_op_num_threads == 4 and options.inter_op_num_threads == 1
     assert options.execution_mode == 'sequential' and options.graph_optimization_level == 'basic'
@@ -97,8 +99,8 @@ def test_forward_preserves_integer_inputs_and_rejects_invalid_runtime_outputs(in
         return [value]
 
     model.session = SimpleNamespace(run=run)
-    batch = dict(input_ids=torch.ones((2, 3), dtype=torch.int64),
-        attention_mask=torch.ones((2, 4 if invalid == 'mask' else 3), dtype=torch.int64))
+    batch = dict(input_ids=np.ones((2, 3), dtype=np.int64),
+        attention_mask=np.ones((2, 4 if invalid == 'mask' else 3), dtype=np.int64))
     if invalid:
         with pytest.raises(ServiceError) as error:
             model(**batch)
@@ -119,12 +121,17 @@ def test_physical_batch_changes_do_not_change_active_positions_or_gate(kind, bat
             return {'input_ids': list(range(len(text) + 1)), 'attention_mask': [1]*(len(text) + 1)}
 
         def pad(self, values, **kwargs):
+            if kind is module.OnnxPassageReranker:
+                assert kwargs['return_tensors'] == 'np'
+                return {'input_ids': np.ones((len(values), 10), dtype=np.int64)}
+            assert kwargs['return_tensors'] == 'pt'
             return {'input_ids': torch.ones((len(values), 10), dtype=torch.int64)}
 
     def forward(**batch):
         assert gate._active
         observed.append(batch['input_ids'].shape[0])
-        return SimpleNamespace(logits=torch.ones((batch['input_ids'].shape[0], 1)))
+        shape = (batch['input_ids'].shape[0], 1)
+        return SimpleNamespace(logits=np.ones(shape, dtype=np.float32) if kind is module.OnnxPassageReranker else torch.ones(shape))
 
     scorer.tokenizer, scorer.model = Tokenizer(), forward
     assert scorer.score('q', ['1', '22', '333', '4444', '55555', 'unused'], now_ms() + 5000,
@@ -143,11 +150,12 @@ def test_onnx_keeps_inactive_pair_in_whole_pool_context_limit(length):
             return {'input_ids': [1]*(length if text == 'long' else 3)}
 
         def pad(self, values, **kwargs):
-            return {'input_ids': torch.ones((len(values), 3), dtype=torch.int64)}
+            assert kwargs['return_tensors'] == 'np'
+            return {'input_ids': np.ones((len(values), 3), dtype=np.int64)}
 
     def model(**batch):
         calls.append(True)
-        return SimpleNamespace(logits=torch.ones((batch['input_ids'].shape[0], 1)))
+        return SimpleNamespace(logits=np.ones((batch['input_ids'].shape[0], 1), dtype=np.float32))
 
     scorer.tokenizer, scorer.model = Tokenizer(), model
     result = scorer.score('q', ['short', 'long'], now_ms() + 5000, InferenceGate(), active=[True, False])

@@ -68,6 +68,19 @@ class PassageReranker:
             raise ValueError("Unsupported reranker tokenizer")
         self.model = self.model.to(device="cpu", dtype=torch.float32).eval()
 
+    def _forward_batch(self, values):
+        import torch
+
+        batch = self.tokenizer.pad(values, padding=True, return_tensors="pt")
+        with torch.inference_mode():
+            result = self.model(**batch).logits
+        if tuple(result.shape) != (len(values), 1):
+            raise ServiceError(503, "INVALID_RERANK_SCORE")
+        result = result[:, 0].float().tolist()
+        if not all(math.isfinite(value) for value in result):
+            raise ServiceError(503, "INVALID_RERANK_SCORE")
+        return result
+
     def score(self, query, texts, deadline, inference, *, active=None):
         # Only request-local state; the caller shares BGE's inference owner.
         if active is None:
@@ -89,16 +102,7 @@ class PassageReranker:
             ids = ordered[start:start + self.physical_batch_size]
 
             def forward():
-                import torch
-                batch = self.tokenizer.pad([values[i] for i in ids], padding=True, return_tensors="pt")
-                with torch.inference_mode():
-                    result = self.model(**batch).logits
-                if tuple(result.shape) != (len(ids), 1):
-                    raise ServiceError(503, "INVALID_RERANK_SCORE")
-                result = result[:, 0].float().tolist()
-                if not all(math.isfinite(value) for value in result):
-                    raise ServiceError(503, "INVALID_RERANK_SCORE")
-                return result
+                return self._forward_batch([values[i] for i in ids])
 
             result = inference.run(forward, deadline, query=True)
             for i, value in zip(ids, result, strict=True):

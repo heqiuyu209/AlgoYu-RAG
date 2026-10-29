@@ -77,9 +77,10 @@ class PairedKnowledgeIndex(DualKnowledgeIndex):
                     reused[row[0]] = list(record.vector)
 
         vectors = []
-        for start in range(0, len(texts), 8):
+        batch_size = self.document_batch_size
+        for start in range(0, len(texts), batch_size):
             check_deadline(deadline)
-            stop = min(start + 8, len(texts))
+            stop = min(start + batch_size, len(texts))
             missing = [i for i in range(start, stop) if i not in reused]
             with locked(self.lock, deadline):
                 check()

@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 from learning_os.hoj.contracts import ServiceError
 from learning_os.hoj.reranker import PassageReranker, verify_model
+from learning_os.hoj.onnx_tokenizer import PinnedOnnxTokenizer
 
 GRAPH_SIZE = 470605122
 GRAPH_SHA256 = '04aca53ef8e0c1a553b6958c8e4480f96667a68fad9b6c24f42ba4144052b342'
@@ -27,6 +28,7 @@ class _OrtModel:
         import onnxruntime as ort
 
         options = ort.SessionOptions()
+        options.enable_cpu_mem_arena = False
         options.intra_op_num_threads, options.inter_op_num_threads = 4, 1
         options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
         options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
@@ -46,22 +48,21 @@ class _OrtModel:
             raise ValueError('Unsupported ONNX reranker graph interface')
         self.metadata = dict(runtimeVersion=ort.__version__, graphSha256=GRAPH_SHA256,
             intraOpThreads=4, interOpThreads=1, execution='sequential', optimization='basic',
-            provider='CPUExecutionProvider', geluApproximation=False, spinning=False)
+            provider='CPUExecutionProvider', geluApproximation=False, spinning=False, cpuMemoryArena=False)
 
     def __call__(self, **batch):
         import numpy as np
-        import torch
 
         if (set(batch) != self.input_names
-                or any(v.device.type != 'cpu' or v.dtype != torch.int64 or v.ndim != 2 for v in batch.values())
+                or any(not isinstance(v, np.ndarray) or v.dtype != np.int64 or v.ndim != 2 for v in batch.values())
                 or batch['input_ids'].shape != batch['attention_mask'].shape):
             raise ServiceError(503, 'INVALID_RERANK_INPUT')
-        feeds = {key: np.ascontiguousarray(value.numpy()) for key, value in batch.items()}
+        feeds = {key: np.ascontiguousarray(value) for key, value in batch.items()}
         result, = self.session.run(['logits'], feeds)
         if (result.dtype != np.float32 or result.shape != (batch['input_ids'].shape[0], 1)
                 or not np.isfinite(result).all()):
             raise ServiceError(503, 'INVALID_RERANK_SCORE')
-        return SimpleNamespace(logits=torch.from_numpy(result))
+        return SimpleNamespace(logits=result)
 
 
 class OnnxPassageReranker(PassageReranker):
@@ -71,10 +72,17 @@ class OnnxPassageReranker(PassageReranker):
         # Verify both code-pinned identities before creating a runtime session.
         verify_graph(graph_path)
         verify_model(directory)
-        from transformers import AutoTokenizer
-
-        self.tokenizer = AutoTokenizer.from_pretrained(str(directory), local_files_only=True,
-            trust_remote_code=False, use_fast=True)
+        self.tokenizer = PinnedOnnxTokenizer(directory, 'ce')
         if not self.tokenizer.is_fast or self.tokenizer.model_max_length != self.token_limit:
             raise ValueError('Unsupported reranker tokenizer')
         self.model = _OrtModel(graph_path)
+
+    def _forward_batch(self, values):
+        import numpy as np
+
+        batch = self.tokenizer.pad(values, padding=True, return_tensors='np')
+        result = self.model(**batch).logits
+        if (result.dtype != np.float32 or result.shape != (len(values), 1)
+                or not np.isfinite(result).all()):
+            raise ServiceError(503, 'INVALID_RERANK_SCORE')
+        return result[:, 0].tolist()

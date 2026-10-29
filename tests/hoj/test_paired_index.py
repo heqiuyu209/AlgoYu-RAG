@@ -90,8 +90,12 @@ def test_identical_inputs_encode_once_and_repeated_ingest_is_model_free(setup, f
         assert point.vector == pytest.approx(b[str(point.id)].vector)
 
 
-def test_markdown_only_encodes_changed_complete_inputs_in_original_order(setup):
+@pytest.mark.parametrize('document_batch_size', [None, 4])
+def test_markdown_only_encodes_changed_complete_inputs_in_original_order(setup, document_batch_size):
     paired, raw, context, model = setup
+    if document_batch_size is not None:
+        model.document_batch_size = document_batch_size
+    size = document_batch_size or 8
     doc = document(long=True)
     a, raw_context = raw._chunk_projection(doc)
     b, context_context = context._chunk_projection(doc)
@@ -101,7 +105,48 @@ def test_markdown_only_encodes_changed_complete_inputs_in_original_order(setup):
     assert changed and len(changed) < len(a)
     paired.ingest(doc, now_ms() + 10000)
     assert [t for batch in model.calls for t in batch] == raw_texts + changed
-    assert all(len(batch) <= 8 for batch in model.calls)
+    assert len(model.calls[0]) == size
+    assert all(len(batch) <= size for batch in model.calls)
+
+
+@pytest.mark.parametrize('view', ['raw', 'context'])
+@pytest.mark.parametrize('stop', ['delete', 'deadline'])
+def test_smaller_document_batches_recheck_before_more_encoding(setup, monkeypatch, view, stop):
+    paired, raw, context, model = setup
+    model.document_batch_size = 4
+    doc = document(long=True)
+    if view == 'context':
+        raw.ingest(doc, now_ms() + 10000)
+    raw_chunks, raw_contexts = raw._chunk_projection(doc)
+    context_chunks, context_contexts = context._chunk_projection(doc)
+    a = raw.embedding_texts(doc, raw_chunks, raw_contexts)
+    b = context.embedding_texts(doc, context_chunks, context_contexts)
+    missing = [i for i in range(len(a)) if view == 'raw' or a[i] != b[i]]
+    assert any(i >= 4 for i in missing)
+    expected = [a[i] if view == 'raw' else b[i] for i in missing if i < 4]
+    assert len(expected) == (4 if view == 'raw' else 3)
+    before = len(model.calls)
+    deadline = now_ms() + 10000
+    original = model.embed
+
+    def finish_first_batch(texts):
+        values = original(texts)
+        if stop == 'delete':
+            assert paired.delete(doc, now_ms() + 5000)['state'] == 'DELETED'
+        else:
+            monkeypatch.setattr(auth, 'now_ms', lambda: deadline + 1)
+        return values
+
+    monkeypatch.setattr(model, 'embed', finish_first_batch)
+    with pytest.raises(ServiceError) as error:
+        paired.ingest(doc, deadline)
+    assert model.calls[before:] == [expected]
+    assert error.value.code == ('VERSION_DELETED' if stop == 'delete' else 'DEADLINE_EXCEEDED')
+    if stop == 'delete':
+        assert raw.row(doc)[2] == context.row(doc)[2] == 'DELETED'
+    else:
+        assert raw.row(doc)[2] == ('WRITING' if view == 'raw' else 'READY')
+        assert context.row(doc) is None if view == 'raw' else context.row(doc)[2] == 'WRITING'
 
 
 def test_raw_ready_does_not_skip_missing_context_backfill(setup):

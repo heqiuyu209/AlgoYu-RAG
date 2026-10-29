@@ -1,6 +1,96 @@
 # HOJ 知识库检索质量
 
-## 最新：同模型 BGE-M3 ONNX 编码（2026-10-27，组件与封装通过，未部署）
+## 最新：ONNX 完整正确性与严格资源通过（2026-10-29，速度/课堂资格待验）
+
+BGE额外仅设置`session.disable_prepacking=1`关闭权重预打包，保留固定FP32图/权重、tokenizer、线程、批次、CPU arena/pattern/reuse及已验证的关闭回收；CE不改。先由独立单构造hook做组件诊断，实际key1、CE key缺省、构造器立即恢复，16查询/19文档及十条CE分数通过，峰值2,076,385,280字节且全原资源条件通过；这份诊断没有完整资格。随后将同一设置静态接入产品并记录`prepacking=False`，重新宿主41项与Linux HOJ/原生BGE兼容371项通过（有重叠不相加）；独立镜像`4fb9aead…`的57源码/依赖与冻结证明一致。原固定依赖层沿用，正常Dockerfile依赖层未重建。
+
+完整三阶段已实际运行并独立审计：parity、真实factory、八组300问；正式query编码298次、新文档输入209份，保存508个FP32向量。四份历史基线逐证据前三保护无损失，current/deployed前二身份/顺序及1e-6分数保护通过；all/calibration/heldout聚合不退步、all/heldout前三90%门槛全部满足，32项gate均true。16,752次独立FP64 cosine及canonical内容/版本/哈希/位置引用核对通过，最大cosine误差5.554e-8。v8必要证据前三仍17/18；这是已暴露八组的兼容回归。
+
+三个模型阶段的严格资源均通过：峰值分别2,007,318,528、2,684,448,768、3,092,865,024字节，实际CPU4/3968MiB（不超过原4GiB）、各阶段至少1GiB业务余量，实际容器swap/触限/OOM均0，全VM换入/换出计数在每阶段均未增加。完整工厂九项签名/权限/截止/撤销/关闭/重启合同通过，实际session确认BGE key1、CE None，arenaFalse/pattern/reuseTrue及原线程/图优化/配置。关闭前后RSS包含file-backed权重解除映射和匿名页回收，不能把全部降幅当成trim单独收益。
+
+父流程608.141秒，原RAG同ID/c151恢复healthy，其他六服务身份/镜像/启动时间、挂载/业务计数/原55源码/空队列/存储与接口保持。权威入口为`data/hoj-onnx-no-prepack-20261029/{execution-audit,evaluation,audits}.json`及三phase目录；原所有失败记录保留。`correctnessQualified/qualityQualified/factoryQualified/resourceQualified=true`仅对应本轮范围；此协议固定correctness-only，没有原生前后夹测，`performanceQualified/fullRegressionQualified/candidateQualified=false`，尚未部署。
+
+源码已达到可整理的运行时里程碑，阶段提交以Git日志为准。提交仅涉及ONNX tokenizer/NumPy bridge、batch4调度、低峰值初始化/关闭回收及对应测试与文档，排除实验/模型/data/凭据。后续先完成原同轮速度门槛，再处理课堂V9此前19/24、heldout7/11的缺口（本候选尚未重测），真实生成/逐结论引用与拒答、本人模型/源站AC-WA及用户验收继续保留。完整八项目标没有据本轮回归缩小或完成。
+
+## 前一阶段：产品关闭路径回收空闲页（2026-10-29，业务与关闭验证通过，完整资源仍拒绝）
+
+先做独立释放诊断：固定glibc身份与ABI，在原BGE close+GC后仅一次`malloc_trim(0)`，RSS1,853,313,024→95,858,688、匿名1,805,062,144→47,607,808，独立原smaps复算均减少1,757,454,336字节，耗时45.557ms。它证明进程glibc有可归还空闲页，不证明全部属于ORT；VM换出+54页在trim前已出现，该诊断资源仍拒绝。原7容器此前已组退出约11小时，先按原ID/镜像恢复，原因未确认；不宣称持续运行。证据为`data/hoj-onnx-trim-diagnostic-20261029`，诊断/审计均不授予完整资格。
+
+基于该证据，ONNX BGE的close在原生命周期锁内等encode结束、清空session/tokenizer后，仅尝试一次经过所有权校验的glibc释放；无新增显式GC。非Linux/缺API/公开malloc/free被替换时降级unavailable，0返回是正常nothing_released，普通清理异常只记failed且保持关闭，不覆盖原加载异常或重试。新增FFI与关闭边界测试，宿主41项、固定依赖Linux HOJ/原生BGE兼容371项通过；两者重叠不相加。首轮宿主因临时目录缺失28通过/12设置错误保留host.xml，补目录后的host-v2.xml通过；本机pyreadline3退出日志另保留，不由此推断产品故障。新57源码镜像`340048b4…`从原c151固定依赖层构建，正常Dockerfile依赖层未重建，未部署。
+
+真实产品parity通过：16查询/19文档保持原容差，六次CE forward/十条旧ORT logits精确相同；product.close之后、显式GC之前RSS1,861,365,760→96,313,344，匿名1,799,143,424→48,963,584。真实原smaps及输入/输出已独立复算，不继承“先GC再trim”的诊断收益。此阶段峰值3,193,802,752字节，容器swap/触限/OOM0，VM in4→4/out144→144，严格资源通过。
+
+真实factory九业务合同全部通过，包括签名TCP、超限fallback、在途撤销、关闭等待、实际重启墓碑/nonce。首次close后、显式清理/GC前RSS2,664,079,360→911,110,144，匿名减少1,746,489,344；第二次关闭也约减少1.75GB。工厂观察器改为外部弱代理，quality观察器改为模块级直接持有，避免统计工具额外强持真实session；所有forward/阻塞及原显式GC数量保持。剩余约0.9GB仍包括CE，不能当BGE泄漏。
+
+完整资格继续未取得：factory峰值3,645,665,280字节、容器swap/触限/OOM0，但VM out144→2415（+2271页）、in4不变；增量跨加载与关闭窗口，不能确定原因或归因trim。新300问未启动，423.453秒内同ID/c151原RAG恢复healthy，其余服务/数据/挂载/源码/API保持。专用独立审计仅给数值/关闭证据，quality/resource/performance/candidate仍false。实际容器上限3968MiB、CPU4、1GiB业务余量及全部原门槛未放宽。工件唯一入口为`data/hoj-onnx-close-release-20261029/{execution-audit,parity-audit,audits}.json`；源码尚未提交/部署，课堂19/24、heldout7/11、本人模型/源站AC-WA与用户验收仍未完成。
+
+下一步针对加载/运行峰值单独验证BGE的`session.disable_prepacking=1`，不与关闭回收视为同一变量；需保留FP32原数值及完整后续门槛，不能预判省内存或速度。另已核对：`add_external_initializers+NumPy mmap`在本版本会复制借用buffer，不能作为zero-copy承诺；默认CPU大external initializer本来会mmap，另一add_initializer借用合同也不能证明可省整份权重，暂不采用。
+
+## 前一阶段：CPU arena 关闭候选（2026-10-28，数值通过，严格资源仍拒绝）
+
+源码仅在BGE/CE两个ORT session关闭CPU arena，并新增`cpuMemoryArena=False`元数据；memory pattern/reuse、固定图/FP32、线程、批次、候选选择及默认原生路径保持。宿主两套件30项通过，冻结227文件的Linux HOJ/原生BGE兼容360项零失败/错误/跳过；二者有重叠，不相加。独立镜像`48b54456…`从原c151固定依赖层构建，57源码和依赖一致，未重新构建正常Dockerfile依赖层，也未部署。
+
+第一份新协议`data/hoj-onnx-noarena-20261028`在模型前被admission拒绝：实际VM available减4GiB仅1,063,968,768字节，比原1GiB少9,773,056；没有加载模型，105.25秒内原RAG恢复，`execution-audit.json`保存空phases。没有放宽业务余量或重试同条件碰运气。随后保持完整16查询/19文档、九factory和300/298/209工作量，将诊断容器上限进一步收紧128MiB为**3968MiB/4,160,749,568字节**；原4GiB保留为最大值，原至少1GiB业务余量、CPU4、零swap/OOM/触限、全VM换页计数、1800秒及恢复要求保持。新十项控制场景包含实际较小上限；同源码/镜像/360测试的证明明确沿用，不冒称重跑。
+
+收紧协议`data/hoj-onnx-noarena-tight-20261028`已真实执行parity，数值和独立输入/输出复算通过：16查询/19文档保持原容差，十条旧ORT logits精确相同；真实session options确认arena=False、pattern/reuse=True及4/1线程/优化级别/配置项。该模型阶段248.98秒；容器峰值3,197,566,976字节、实际swap/触限/OOM-kill0。但VM换入61,327→61,328页，换出234,064不变，违反原严格门槛；首个bge-loaded检查点已经出现该增量，不能确定由模型或其他进程引起。factory和quality均未启动，不能沿用上一镜像的九factory业务结果为本候选授予资格。
+
+只读检查点显示BGE close+GC后RSS1,828,315,136字节、匿名1,780,477,952；CE清理后RSS1,831,706,624、匿名1,783,721,984，说明本候选尚未消除大量匿名驻留，不能认定是会话泄漏或哪层分配器。两轮工作量/环境不同且没有本轮原生夹测，不能据248.98秒对比旧耗时判断性能变化。父流程383.0秒恢复同ID/c151原RAG且healthy，其他服务/数据/挂载/源码/API保持；离线独立审计完成，资格仍全为false。权威入口为tight目录的`execution-audit.json`、`parity-audit.json`、`audits.json`；候选源码仍未提交/部署，课堂19/24及heldout7/11缺口、速度、本人模型/源站AC-WA与用户验收仍未完成。
+
+下一步先做分配器身份及释放诊断，不重复本协议或修改全局WSL/swap。已用断网512MiB、零模型/零释放调用的临时容器采集`data/hoj-onnx-allocator-20261028/identity.json`：固定ORT1.31的两个已映射二进制哈希/build-info已保存，malloc/free/posix_memalign/aligned_alloc/malloc_trim解析到glibc，aligned new/delete解析到libstdc++；镜像没有readelf，因此没有ELF重定位/完整CPU allocator调用链证据，不能据此认定ORT全部分配均来自glibc。后续可将一次进程内`malloc_trim(0)`作为明确改变分配器状态的独立诊断，记录原close+GC后与trim后的RSS/cgroup，不增加forward；它不是只读检查点，不能解释或撤销既有1页换入失败，也不自动取得完整质量/速度/资源资格。
+
+## 前一阶段：无 Torch 候选的真实数值与工厂验证（2026-10-28，资源拒绝，原服务已恢复）
+
+候选镜像 `343b5c69…` 已从原 c151 固定依赖层与360项Linux通过的57份源码构建，源码哈希逐份一致；这次没有重新构建正常Dockerfile依赖层。新协议重新冻结57份源码、134份输入和12份脚本，沿用19份模型资产、77份历史冻结、四CPU/四GiB、至少一GiB业务余量、零容器/全VM换页及共享1800秒截止。九种控制场景在无Docker/模型条件下通过，包括进程退出0但质量标记失败的拒绝。首个未执行草案和加强后的CE按输入身份审计均保留。
+
+真实数值阶段通过：16查询、19文档与原生BGE参考保持原1e-5坐标/1e-6余弦及范数容差；19文档最大坐标差4.210e-7、余弦距离7.474e-12、单位范数误差6.822e-8。实际输入、图原始输出及最终向量全部保存，断网离线审计重新核对查询输入、调用者顺序及第二次FP32归一化。另从旧ORT冻结报告按固定query/render/20项池次序/active还原两例，六次物理forward的十个active logits逐项完全相同；新真实feeds也保存并逐批重建核对。旧CE真实feeds未保存，不能宣称与旧feeds逐字节比较或据此证明原生CE数值等同。该阶段峰值3,227,377,664字节，实际容器swap、触限、OOM-kill均0，全VM换入/换出计数不变，严格资源通过。
+
+真实工厂阶段的九项业务检查全部通过：from_env与共享所有权、512/未激活513整池回退、真实签名TCP及篡改/重放/截止/空权限零调用、paired入库/复用/幂等/引用、错误版本或哈希零调用、真实BGE与CE在途撤销、后续入库批次停止、关闭等待及实际重启后的墓碑/nonce保留。两个阶段结束均未导入Torch/Transformers/SentenceTransformers。但工厂资源检查拒绝：峰值4,048,723,968字节、触限/OOM-kill0，末检查点实际容器swap593,920字节；全VM换入+59页、换出+822页。全VM变化不能全部归因该容器，实际容器swap本身已不满足原门槛。
+
+父流程554.36秒后恢复同ID/c151原RAG并确认healthy；其他六服务的身份/镜像/启动时间、原挂载/源码/数据/空队列/接口均保持。新300问阶段未启动，质量/速度/资源/部署资格均未取得，没有放宽门槛、改全局WSL/swap或更新线上候选。本轮批4和NumPy源码尚未提交。课堂必要证据前三19/24、heldout7/11缺口及真实生成/拒答、本人模型/源站AC-WA、用户验收继续保留。
+
+唯一执行证据入口：`data/hoj-onnx-execution-20261028/execution-audit.json`（恢复与实际资源），`parity-audit.json`（独立数值），`audits.json`（总体未合格）；三个阶段目录为`data/hoj-onnx-numpy-{parity,factory,quality}-20261028`。下一步先调查独立ORT session arena的内存保留，以固定图/输出的离散候选验证，不能靠重复同一协议碰运气；任何新内存选项仍需原数值、工厂、完整质量、速度及严格资源条件。
+
+后续待验证假设：两个session均未显式修改默认CPU arena；可先仅设`options.enable_cpu_mem_arena=False`，保留memory pattern/reuse及图/线程/批次。官方默认与分配器行为见[固定v1.31选项](https://github.com/microsoft/onnxruntime/blob/v1.31.0/onnxruntime/core/framework/session_options.h#L101-L115)、[CPU EP](https://github.com/microsoft/onnxruntime/blob/v1.31.0/onnxruntime/core/providers/cpu/cpu_execution_provider.cc#L60-L65)。本轮尚未实现或试跑该候选；应保存实际session选项及加载、关闭GC、重开前后的RSS/cgroup快照，不预判能消除swap或保持速度。另需核对CE显式关闭所有权；本次探针首次重开前已经清空旧CE/model/tokenizer真实引用，不能认定两套模型必然重叠或将其作为已证实根因。
+
+## 前一阶段：ONNX 路径去除 Torch 转换（2026-10-28，组件通过，未部署）
+
+为解决原资源资格失败，新增只依赖固定 tokenizers 0.23.3 的本地分词器。从原资产精确构造 Unigram 分数，并恢复已观察的 HF 5.20.2 effective normalizer / pre-tokenizer / decoder；同时检查原文件 SHA 与完整 backend canonical SHA。没有复制实验大 JSON、修改模型资产或下载模型。ONNX BGE 的第二次 FP32 L2 改为 NumPy；CE 共享候选选择逻辑，只替换物理 forward 的 NumPy 补齐与 ORT 输入输出。原生默认、模型 / 图 / 线程、文档批4 / CE批2、8192 / 512 上限、全池超限 fallback、active 槽位、deadline / 撤销与证据选择规则保持。
+
+实际产品分词器在固定 c151 依赖的独立断网容器中与封存 HF 参考逐项比较：BGE14、CE25 共39份 IDs / mask 完全一致。其中 CE 首份为48条未补齐记录，其后24份为补齐批；实际38个 NumPy 批次检查 int64 / C连续。成功点没有导入 Torch、ST、Transformers 或 ORT，模型前向0；独立只读复核了全部矩阵与四源码 hash。这只证明分词组件，不证明完整 ONNX 模型路径或真实 factory 无 Torch。来源与源码绑定见 data/hoj-onnx-product-20261028 的 check_tokenizers.py、product-tokenizers.json、checkout-v2.json 及 component-audit.json。
+
+冻结57份源码及相关已跟踪测试 / 夹具，使用原 c151 依赖与已校验离线 pytest 轮子，Linux HOJ＋原生BGE兼容 **360项通过，失败 / 错误 / 跳过均0**。覆盖原生 forward、ONNX dtype / 形状 / finite、inactive 513整池 fallback、生命周期；宿主另按既有 Torch 运算比较普通及微小 FP32 向量的第二次 L2。这些是受控测试，不是新真实模型向量 / logits 回归。首轮359项有1项既有真实墙钟等待测试失败（耗时0.598秒而未抛截止错误），原因未确认；保留 linux.json/xml/log。将该测试改为分类器阻塞期间显式推进 auth.now_ms，分别检查恰好截止与截止后1毫秒，生产截止逻辑未改；新树的 linux-v2.json/xml/log 全量通过。最初宿主临时目录权限错误也保留，不计为通过。
+
+本轮源码及批4调度仍未提交 / 构建候选镜像 / 部署；真实模型新数值、实际 factory / TCP / 撤销 / 重启、新300问质量与时延、原严格资源门槛均未验证。不得继承旧候选的性能资格或据分词器未导入 Torch 声称整个服务内存达标。课堂证据19/24、留出7/11的原质量缺口保持。下一步冻结完整无 Torch 执行候选，先按原容差比较实际 BGE / CE 输出并检查真实工厂，再跑原全部质量与资源条件；不修改全局 WSL / swap 或放宽门槛。
+
+收尾发现原7个HOJ服务在09:14UTC集中退出，退出原因未确认，OOM标志均false；独立单测在12:23UTC才开始，不能据此把退出归因该测试。12:32UTC原7容器已按相同身份 / 镜像 / 挂载恢复，6个healthy、接口200/200/401、原业务计数及RAG55源码核对通过；记录见 services-recovery.json。启动时间已改变，不能宣称持续运行。仅恢复已部署后端 e82578bb… / 判题 ff0cf2d4… 和原RAG c151及其依赖，不采用本轮候选，不操作其他项目。
+
+## 最新：每批4条编码的验证（2026-10-28，资源未合格，原服务已恢复）
+
+继续保持现有速度、改善证据完整性的方向。ONNX 文档编码及 raw/context 外层调度同步改为4，默认原生路径仍为8；模型、tokenizer、8192 token上限、CLS/FP32双L2、文档文本和证据选择规则不变。新增删除/截止回归检查第一窗口完成后不得继续后续窗口。工作区定向56项通过；冻结源码 Linux HOJ＋原生BGE兼容350项通过，零失败/错误/跳过，二者有重叠。最初主机临时目录权限错误、首轮Linux导出遗漏16项所需脚本/数据的失败工件均保留；补齐依赖后重跑，不将失败计为通过。
+
+独立候选镜像367d42cc…使用原c151依赖层，只更新56个Python源码文件；不是正常Dockerfile全新依赖构建，未部署。8种无Docker控制故障模拟通过。新真实协议依次为parity、factory、quality，保留4GiB/4CPU、实际容器零swap、全VM换页计数不变、1GiB余量和1800秒总限；不会用正确性协议获得性能资格。实际仅parity完成：16查询和19文档，文档批次为[4,543]/[4,54]/[4,30]/[4,24]/[3,10]，重复/空输入和调用方顺序断言通过；19文档与封存原生向量独立重算的最大坐标差4.21e-7、cosine distance7.47e-12。16查询误差与有效token比较仅保留producer断言/汇总，未另存本次查询数组和完整token矩阵，不称该部分独立数值审计。
+
+该段容器峰值3,316,322,304字节，触限/OOM-kill和前后实际容器swap均0；全VM换入23→23页、换出2010→5107页，增加3097页（12,685,312字节），因此原严格资源门槛拒绝。不能据全局计数归因该容器自身换页，也不能拿19文档组件峰值和旧300问峰值作同工作量对比。factory及新batch4的300问均未启动，不声称真实TCP/重启或完整检索通过。父流程315.235秒结束，恢复同一c151容器healthy，其余原服务、挂载、业务计数与接口保持；工件为data/hoj-bge-batch4-20261028/partial-audit.json。源码调整暂未提交，等待完整验证，不重复运行相同协议碰运气或调整全局WSL/swap。
+
+本轮开始时Docker引擎未运行，启动Desktop后仅对原7个HOJ容器执行恢复；初次420秒健康等待超时，稍后健康检查通过并另存environment-recovered.json，API/配置/存储和原镜像核对一致。同时观察到其他项目容器也已运行，仅记录该现象，未对其他项目执行操作。线上仍为原c151，课堂多证据及真实生成/拒答、本人模型/源站AC-WA与整体用户验收仍未完成。
+
+## 前一阶段：完整原生基线与资源资格（2026-10-28，原服务已恢复，候选未部署）
+
+两轮都实际完成八组 300 题、900 次原生响应，每模式 298 次计时范围查询编码；全部原质量、逐证据前三、split 聚合和原速度门槛通过。这些是旧编码器的基线证据，不是新 ONNX 编码器已通过完整检索。首轮在模型完成后因资源脚本假定 cgroup v2 而报错；恢复校验又错误依赖挂载数组顺序。独立快照确认同 RAG 容器 / c151 镜像、7份挂载完整集合 / 3命名卷、其余6服务身份和启动时间、业务计数 / 向量 / 116条 DELETED 墓碑均保持。原失败记录未覆盖，补充确认在 data/hoj-bge-pipeline-20261027/recovery-confirmed.json。
+
+适配当前真实 cgroup v1 后，第二轮模型完成但资源资格失败：内存峰值 **4,142,985,216 字节**，触限计数 / OOM-kill 均0，前后检查点实际 swap 均0；VM全局换入增加74页、换出增加32,480页（约126.875MiB）。原资源条件未放宽，候选和后测均未继续。父流程约593.656秒结束并自动恢复原RAG，挂载比较改为按Destination核对全部字段；网站200、受保护知识库路由匿名401、原数据保持。完整状态在 data/hoj-bge-pipeline-20261028/final-state.json，completePipelineQualified=false。
+
+资源采集现按 membership / mountinfo 分别定位 memory 与 CPU 控制器，并在模型之前预检字段。v1 failcnt记录触限，不能冒充OOM事件；不可对应的 oomEventCount / swapHardLimitBytes保持null。按版本检查真实限制 / OOM-kill / 实际swap并保留前后原始值；全局换页累计计数变化会拒绝该段资源资格。[内核v1字段说明](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v1/memory.html)、[Docker内存与swap配置](https://docs.docker.com/engine/containers/resource_constraints/)。真实64MiB微型容器已通过，10项平台合同及7种控制故障模拟通过；它们不代替模型全程资格。
+
+五进程协议随后封存并实际启动：计划依次测旧路径300、dense / deployed前测600、ONNX300、后测600、旧路径后测300，每进程仅一套BGE及一套CE；原门槛均保留。但是实际只留存前四组 **212条响应 / 210次非空query encode**，v5首题在retrieve与measure之后触发历史完整对象相等断言，该响应未保存，差异类型未知；不能将其推断为浮点尾数或300条已复现。其余四阶段未启动，ONNX仍未执行。前212条已独立比对历史current / ce_slots完全一致。
+
+该段资源finally另行失败：峰值 **3,008,667,648字节（2.802GiB）**、触限 / OOM-kill0、容器swap两检查点0，但全VM换入增加23页、换出不变。父流程约326.891秒结束，原c151同ID恢复healthy，其他6服务身份 / 启动时间、7份完整挂载 / 3命名卷、业务计数 / 零向量 / 116条墓碑及接口200 / 200 / 401保持；失败未覆盖，封存在 data/hoj-bge-matched-20261028/final-state.json，completePipelineQualified=false。不能据此归因实验容器自身发生换页。
+
+另立 data/hoj-bge-correctness-20261028 的旧batch8正确性协议已实际完成模型质量阶段：300响应 / 298次正式query encode / 209份新文档输入，508个实际向量完整保存；独立核对四历史基线、原90% all/heldout、各split聚合、前二与逐证据前三保护，八组全部质量门槛通过。16752次独立FP64余弦检查最大误差5.381e-8，canonical范围/哈希/引用核对通过；不能扩大为未见课堂质量。该段资源失败：峰值4,170,973,184字节、触限/OOM-kill0，但末检查点实际容器swap2,424,832字节，全VM换入+84/换出+9974页。父流程终止并恢复原RAG，真实factory/TCP/撤销/关闭/重启阶段未启动。封存审计为quality-partial-audit.json；resource/performance/candidateQualified均false，不代替速度夹测，失败记录与原门槛保留。
+
+线上仍为原c151，RAG已提交基线56c4224未推送，后端 / 判题保持。旧batch8的300问质量已验证，但候选完整资格 / TCP生命周期、课堂证据覆盖与完整八项目标继续未完成。
+
+## 前一阶段：同模型 BGE-M3 ONNX 编码（2026-10-27，组件与封装通过，未部署）
 
 继续用户确定的速度优先方向，先验证同一个 FP32 编码器能否释放耗时余量，不改变证据选择策略。使用 [BAAI 固定版本的官方 ONNX 图](https://huggingface.co/BAAI/bge-m3/tree/5617a9f61b028005a4858fdac845db406aefb181/onnx)，小图 724,923 字节与外部权重 2,266,820,608 字节分别校验公开 SHA256；原生权重和原 tokenizer / CLS 配置也与固定版本逐项校验。图输出 sentence_embedding，CPU4/1、sequential、EXTENDED、关闭 spin / GELU 近似，无量化。原生和 ONNX 使用相同的两次 FP32 L2。
 
