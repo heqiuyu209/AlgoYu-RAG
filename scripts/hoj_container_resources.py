@@ -74,7 +74,7 @@ SHELL_FUNCTIONS = r'''
 emit() {
   if [ -r "$1" ]; then
     printf '@@FILE %s\n' "$1"
-    while IFS= read -r line; do printf '%s\n' "$line"; done < "$1"
+    cat "$1"
     printf '\n'
   fi
 }
@@ -86,9 +86,7 @@ emit_stat() {
 emit_status() {
   if [ -r "$1" ]; then
     printf '@@FILE %s\n' "$1"
-    while IFS= read -r line; do
-      case "$line" in Name:*|Pid:*|Tgid:*|VmRSS:*|RssAnon:*|RssFile:*|RssShmem:*|VmSwap:*|Threads:*) printf '%s\n' "$line";; esac
-    done < "$1"
+    awk '/^(Name|Pid|Tgid|VmRSS|RssAnon|RssFile|RssShmem|VmSwap|Threads):/ {print}' "$1"
     printf '\n'
   fi
 }
