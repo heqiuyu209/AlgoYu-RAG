@@ -155,6 +155,18 @@ class ContainerResourcesTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse(files)
 
+    def test_malformed_memory_counter_reports_its_file(self):
+        files = fixture()
+        path = '/sys/fs/cgroup/docker/' + CID + '/memory.events'
+        files[path] = 'max 0\noom\noom_kill 0'
+        with self.assertRaisesRegex(ValueError, r'memory\.events.*incomplete counter'):
+            parse(files)
+
+    def test_malformed_process_counter_reports_its_file(self):
+        files = fixture(); files['/proc/1/status'] += '\nVmSwap:'
+        with self.assertRaisesRegex(ValueError, r'/proc/1/status.*incomplete counter'):
+            parse(files)
+
     def test_duplicate_raw_sections_and_counters_rejected(self):
         with self.assertRaises(ValueError):
             resources.sections('@@FILE a\n1\n@@FILE a\n2')

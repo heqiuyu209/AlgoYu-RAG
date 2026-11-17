@@ -146,18 +146,24 @@ def sections(raw):
     return {name: '\n'.join(lines).strip() for name, lines in result.items()}
 
 
-def table(raw):
+def table(raw, source='resource table'):
     result = {}
     for line in raw.splitlines():
         if not line.strip():
             continue
-        key, value, *units = line.split()
+        parts = line.split()
+        if len(parts) < 2:
+            raise ValueError(source + ': incomplete counter line: ' + repr(line[:96]))
+        key, value, *units = parts
         key = key.rstrip(':')
         if key in result or units not in ([], ['kB']):
-            raise ValueError('duplicate counter or unsupported units')
-        result[key] = int(value) * (1024 if units else 1)
+            raise ValueError(source + ': duplicate counter or unsupported units')
+        try:
+            result[key] = int(value) * (1024 if units else 1)
+        except ValueError as error:
+            raise ValueError(source + ': invalid counter value for ' + key) from error
         if result[key] < 0:
-            raise ValueError('negative resource counter')
+            raise ValueError(source + ': negative resource counter')
     return result
 
 
@@ -225,10 +231,10 @@ def parse(raw, container_id, evidence=None):
         if value < 0:
             raise ValueError('negative memory value')
         return value
-    stats = table(files[folder + 'memory.stat'])
+    stats = table(files[folder + 'memory.stat'], folder + 'memory.stat')
     v2 = location['version'] == 2
     if v2:
-        events = table(files[folder + 'memory.events'])
+        events = table(files[folder + 'memory.events'], folder + 'memory.events')
         memory = dict(memoryCurrentBytes=number('memory.current'), memoryPeakBytes=number('memory.peak'),
             memoryLimitBytes=number('memory.max', True), memoryLimitUnlimited=files[folder + 'memory.max'] == 'max',
             swapCurrentBytes=number('memory.swap.current'), swapHardLimitBytes=number('memory.swap.max', True),
@@ -237,7 +243,7 @@ def parse(raw, container_id, evidence=None):
             underOom=None, combinedMemorySwapLimitBytes=None, memoryEvents=events,
             inactiveFileBytes=stats.get('inactive_file'))
     else:
-        oom = table(files[folder + 'memory.oom_control'])
+        oom = table(files[folder + 'memory.oom_control'], folder + 'memory.oom_control')
         memory = dict(memoryCurrentBytes=number('memory.usage_in_bytes'), memoryPeakBytes=number('memory.max_usage_in_bytes'),
             memoryLimitBytes=number('memory.limit_in_bytes'), memoryLimitUnlimited=False,
             swapCurrentBytes=stats.get('total_swap'), swapHardLimitBytes=None, swapLimitUnlimited=None,
@@ -246,7 +252,8 @@ def parse(raw, container_id, evidence=None):
             combinedMemorySwapCurrentBytes=number('memory.memsw.usage_in_bytes'),
             memoryEvents=None, inactiveFileBytes=stats.get('total_inactive_file'))
     normalized = dict(controller=location, memoryHierarchyVersion=location['version'], **memory,
-        memoryStats=stats, vm=table(files['/proc/vmstat']), meminfo=table(files['/proc/meminfo']),
+        memoryStats=stats, vm=table(files['/proc/vmstat'], '/proc/vmstat'),
+        meminfo=table(files['/proc/meminfo'], '/proc/meminfo'),
         bootId=files['/proc/sys/kernel/random/boot_id'],
         uptimeSeconds=float(files['/proc/uptime'].split()[0]),
         cgroupNamespace=files.get('/proc/1/ns/cgroup'),
@@ -264,7 +271,7 @@ def parse(raw, container_id, evidence=None):
         status = {}
         for line in files.get('/proc/' + pid + '/status', '').splitlines():
             name, item = line.split(':', 1)
-            status.update({name: item.strip()} if name == 'Name' else table(line))
+            status.update({name: item.strip()} if name == 'Name' else table(line, '/proc/' + pid + '/status'))
         normalized['processes'][pid] = dict(startTicks=int(fields[19]),
             minorFaults=int(fields[7]), majorFaults=int(fields[9]), status=status)
     result = dict(raw=files, normalized=normalized)
