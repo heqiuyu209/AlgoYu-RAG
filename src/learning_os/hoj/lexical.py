@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 import sqlite3
 import unicodedata
+from collections.abc import Iterator
 
 from learning_os.hoj.auth import check_deadline, now_ms
 
@@ -15,13 +16,37 @@ _CJK = r"\u3400-\u9fff\uf900-\ufaff\U00020000-\U0002fa1f"
 _PARTS = re.compile(r"[" + _CJK + r"]+|[^\W_" + _CJK + r"]+(?:_[^\W_" + _CJK + r"]+)*", re.UNICODE)
 _HAN = re.compile(r"^[" + _CJK + r"]+$")
 _CODE_IDENTIFIER = re.compile(r"(?<![A-Za-z0-9_])[A-Za-z_][A-Za-z0-9_]{1,63}(?![A-Za-z0-9_])")
+_CODE_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+_INLINE_CODE = re.compile(r"(?<![\\`])(`+)(?!`)(.*?)(?<!`)\1(?!`)")
+
+
+def _inline_code_identifiers(query: str) -> Iterator[str]:
+    fence = ""
+    for line in query.splitlines():
+        marker = _CODE_FENCE.match(line)
+        if fence:
+            if marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not marker[2].strip():
+                fence = ""
+            continue
+        if marker and (marker[1][0] == "~" or "`" not in marker[2]):
+            fence = marker[1]
+            continue
+        for code in _INLINE_CODE.finditer(line):
+            name = code[2].strip()
+            if _CODE_IDENTIFIER.fullmatch(name):
+                yield name
 
 
 def code_identifiers(query: str) -> list[str]:
     """Conservative explicit names; ordinary words retain semantic ranking."""
     names = list(dict.fromkeys(match.group() for match in _CODE_IDENTIFIER.finditer(query)
                                if "_" in match.group()))
-    return names if len(names) <= 4 else []
+    if len(names) > 4:
+        return []
+    if "`" not in query:
+        return names
+    explicit = list(dict.fromkeys(names + list(_inline_code_identifiers(query))))
+    return explicit if len(explicit) <= 4 else names
 
 
 def mentioned_identifiers(text: str, names) -> set[str]:

@@ -10,7 +10,9 @@ from qdrant_client import QdrantClient
 from learning_os.hoj import lexical
 from learning_os.hoj.auth import now_ms
 from learning_os.hoj.contracts import Ingest, Retrieve, ServiceError, VersionRef
+from learning_os.hoj.dual_index import ContextIndex
 from learning_os.hoj.index import KnowledgeIndex, digest
+from learning_os.hoj.paired_index import PairedKnowledgeIndex
 
 
 class OrderedEmbedding:
@@ -24,16 +26,24 @@ class OrderedEmbedding:
         return [1.0, 0.0, 0.0]
 
 
-@pytest.fixture(params=[False, True], ids=['dense', 'passage-classifier'])
+@pytest.fixture(params=['dense', 'passage-classifier', 'paired'])
 def indexed(tmp_path, request):
     clients = []
 
     def create(code="target_fn checks a factor.", *, last="A semantic alternative.", title="Code"):
         client = QdrantClient(location=":memory:")
         clients.append(client)
-        index = KnowledgeIndex(client, OrderedEmbedding(), tmp_path / f"state-{len(clients)}.sqlite3",
-                               namespace="identifier-tests", reranker=(SimpleNamespace(
-                                   score=lambda _query, texts, *_, **kw: [0.] * len(texts)) if request.param else None))
+        embedder = OrderedEmbedding()
+        path = tmp_path / f"state-{len(clients)}.sqlite3"
+        namespace = "identifier-tests"
+        reranker = SimpleNamespace(score=lambda _query, texts, *_, **kw: [0.] * len(texts))
+        if request.param == "paired":
+            context = ContextIndex(client, embedder, path.with_name(f"context-{len(clients)}.sqlite3"),
+                                   collection="context", namespace=namespace)
+            index = PairedKnowledgeIndex(client, embedder, path, namespace=namespace, context=context, reranker=reranker)
+        else:
+            index = KnowledgeIndex(client, embedder, path, namespace=namespace,
+                                   reranker=None if request.param == "dense" else reranker)
         docs = []
         for number, (body, cosine, name) in enumerate([
             ("First explanation.", .99, "One"), ("Second explanation.", .98, "Two"),
@@ -158,3 +168,29 @@ def test_identifier_recognition_is_bounded_and_handles_adjacent_chinese():
     assert lexical.code_identifiers("a_b c_d e_f g_h i_j") == []
     assert lexical.code_identifiers("x"*65 + "_fn") == []
     assert not lexical.mentioned_identifiers("is_prime_extra prefix_is_prime IS_PRIME", ["is_prime"])
+
+
+def test_inline_code_name_without_underscore_uses_authorized_last_slot(indexed):
+    index, docs = indexed("findRoot returns the representative of a set.")
+    earlier = retrieve(index, docs, "findRoot 如何找到代表元？")
+    earlier_without_target = retrieve(index, docs[:-1], "findRoot 如何找到代表元？")
+    with patch("learning_os.hoj.lexical.search", wraps=lexical.search) as search:
+        after = retrieve(index, docs, "调用 `findRoot` 时如何找到代表元？")
+        outside_scope = retrieve(index, docs[:-1], "解释 `findRoot`")
+    assert after[:-1] == earlier[:-1]
+    assert after[-1]["documentId"] == docs[-1].documentId
+    assert after[-1]["excerpt"] == docs[-1].content
+    assert after[-1]["score"] == pytest.approx(.25, abs=2e-6)
+    assert outside_scope == earlier_without_target
+    assert search.call_count == 2 and all(call.args[3] == "findRoot" for call in search.call_args_list)
+
+
+def test_inline_code_names_respect_literal_boundaries_and_the_old_budget():
+    assert lexical.code_identifiers("比较 `findRoot` 和 ``unite``") == ["findRoot", "unite"]
+    assert lexical.code_identifiers("复用 lower_bound 与 `findRoot` 和 `lower_bound`") == ["lower_bound", "findRoot"]
+    assert lexical.code_identifiers("旧名 a_b c_d e_f g_h，另一个 `findRoot`") == ["a_b", "c_d", "e_f", "g_h"]
+    assert lexical.code_identifiers("比较 `AA` `BB` `CC` `DD` `EE`") == []
+    assert lexical.code_identifiers("包含 `findRoot(x)`、`two words` 和 `n`") == []
+    assert lexical.code_identifiers(r"文本 \`escaped\` 和 ``例子 `inner` 示例``") == []
+    assert lexical.code_identifiers("~~~text\n `example`\n~~~\n实际问题 `dfs`") == ["dfs"]
+    assert lexical.code_identifiers("```text\n `example`\n```\n实际问题 `dfs`") == ["dfs"]
