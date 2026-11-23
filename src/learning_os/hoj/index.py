@@ -98,6 +98,36 @@ class KnowledgeIndex:
                               "WHERE namespace=? AND doc_id=? AND version=?",
                               (self.namespace, ref.documentId, ref.version)).fetchone()
 
+    def _ready(self, refs: list[VersionRef]) -> list[VersionRef]:
+        if not refs:
+            return []
+        keys = [(ref.documentId, ref.version, ref.contentHash) for ref in refs]
+        ready = set()
+        with self.connection() as db:
+            batch_size = max(1, (db.getlimit(sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER) - 1) // 3)
+            if len(keys) > batch_size and not db.in_transaction:
+                # All batches must observe the same snapshot on SQLite builds with a smaller bind limit.
+                db.execute("BEGIN")
+            for start in range(0, len(keys), batch_size):
+                batch = keys[start:start + batch_size]
+                values = ",".join("(?, ?, ?)" for _ in batch)
+                parameters = [value for key in batch for value in key]
+                parameters.append(self.namespace)
+                # Drive the join from the requested keys so SQLite can use the manifest's full primary key.
+                ready.update(db.execute(
+                    "WITH allowed(doc_id, version, content_hash) AS (VALUES " + values + ") "
+                    "SELECT a.doc_id, a.version, a.content_hash "
+                    "FROM allowed a CROSS JOIN version_manifest m "
+                    "WHERE m.namespace=? AND m.doc_id=a.doc_id AND m.version=a.version "
+                    "AND m.content_hash=a.content_hash AND m.state='READY'",
+                    parameters,
+                ))
+        return [ref for ref, key in zip(refs, keys, strict=True) if key in ready]
+
+    def _recheck(self, refs: list[VersionRef]) -> None:
+        if len(self._ready(refs)) != len(refs):
+            raise ServiceError(409, "VERSION_CHANGED")
+
     def scope(self, refs: list[VersionRef]) -> models.Filter:
         # OR of complete tuples: never OR document IDs and versions separately.
         return models.Filter(must=[models.FieldCondition(key="namespace", match=models.MatchValue(value=self.namespace))],
@@ -348,11 +378,7 @@ class KnowledgeIndex:
             unique = {ref.key(): ref for ref in request.allowedVersions}
             if len(unique) != len(request.allowedVersions):
                 raise ServiceError(400, "DUPLICATE_VERSION")
-            ready = []
-            for ref in request.allowedVersions:
-                row = self.row(ref)
-                if row and row[0] == ref.contentHash and row[2] == "READY":
-                    ready.append(ref)
+            ready = self._ready(request.allowedVersions)
             if not ready:
                 # An empty permission set must not invoke embedding or unfiltered search.
                 return {"items": []}
@@ -360,10 +386,7 @@ class KnowledgeIndex:
         if not self.valid_vector(vector):
             raise ServiceError(503, "INVALID_EMBEDDING")
         with locked(self.lock, deadline):
-            for ref in ready:
-                row = self.row(ref)
-                if not row or row[0] != ref.contentHash or row[2] != "READY":
-                    raise ServiceError(409, "VERSION_CHANGED")
+            self._recheck(ready)
             candidate_limit = (min(100, max(20, request.topK * 4))
                                if self.retrieval_mode == "hybrid" or self.reranker is not None else request.topK)
             points = self.client.query_points(self.collection, query=vector, query_filter=self.scope(ready),
@@ -391,10 +414,7 @@ class KnowledgeIndex:
             check_deadline(deadline)
             # Recheck durable tombstones even if another adapter instance revoked
             # a version while this one was embedding the query.
-            for ref in ready:
-                row = self.row(ref)
-                if not row or row[0] != ref.contentHash or row[2] != "READY":
-                    raise ServiceError(409, "VERSION_CHANGED")
+            self._recheck(ready)
             items = []
             for point in points:
                 p = point.payload or {}

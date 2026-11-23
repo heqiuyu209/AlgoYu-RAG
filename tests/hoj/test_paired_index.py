@@ -1,8 +1,10 @@
 """Real local manifests/collections, fake model: paired writes and revocation."""
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 import hashlib
 import json
 import math
+import sqlite3
 from threading import Event
 
 import pytest
@@ -10,7 +12,7 @@ from qdrant_client import QdrantClient, models
 
 from learning_os.hoj import auth
 from learning_os.hoj.auth import now_ms
-from learning_os.hoj.contracts import Ingest, Retrieve, ServiceError
+from learning_os.hoj.contracts import Ingest, Retrieve, ServiceError, VersionRef
 from learning_os.hoj.dual_index import ContextIndex
 from learning_os.hoj.index import KnowledgeIndex, digest
 from learning_os.hoj.paired_index import PairedKnowledgeIndex
@@ -69,6 +71,94 @@ def document(format_='markdown', long=False):
     if format_ == 'pdf':
         body += '\n\f\nSecond physical page with an original explanation.'
     return Ingest(documentId='a'*32, version=1, contentHash=digest(body), title='Lecture', format=format_, content=body)
+
+
+def manifest_examples(total):
+    return [VersionRef(documentId=f'{i:032x}', version=1, contentHash='a'*64)
+            for i in range(1, total+1)]
+
+
+@pytest.mark.parametrize(('view', 'legacy_limit', 'statement_count'), [
+    ('single', False, 3),
+    ('paired', False, 5),
+    ('paired', True, 10),
+])
+def test_retrieve_batches_manifest_checks_for_a_full_allowlist(setup, monkeypatch, view, legacy_limit, statement_count):
+    paired, raw, context, model = setup
+    doc = document()
+    paired.ingest(doc, now_ms() + 10000)
+    refs = manifest_examples(499)
+    # The other versions are ready in the manifests, but the vector fixture has only one document.
+    for index in (raw, context):
+        with index.connection() as db:
+            db.executemany("INSERT INTO version_manifest VALUES(?,?,?,?,?,?,?)", [
+                (index.namespace, ref.documentId, ref.version, ref.contentHash, ref.contentHash, 'READY', 1)
+                for ref in refs
+            ])
+    reads = []
+
+    def trace(index):
+        connection = index.connection
+
+        @contextmanager
+        def watched():
+            with connection() as db:
+                if legacy_limit:
+                    db.setlimit(sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER, 999)
+                db.set_trace_callback(lambda sql: reads.append(sql)
+                                      if 'version_manifest' in sql and 'SELECT' in sql.upper() else None)
+                yield db
+        monkeypatch.setattr(index, 'connection', watched)
+
+    index = raw if view == 'single' else paired
+    trace(index)
+    if view == 'paired':
+        trace(context)
+    hits = index.retrieve(Retrieve(query='algorithm invariant', allowedVersions=[*refs, doc]), now_ms() + 30000)
+    assert len(hits['items']) == 1 and hits['items'][0]['documentId'] == doc.documentId
+    assert model.queries == 1
+    assert len(reads) == statement_count
+
+
+def test_legacy_manifest_batches_read_a_single_fresh_snapshot(setup, monkeypatch):
+    paired, _, _, _ = setup
+    refs = manifest_examples(500)
+    earlier, later = refs[0], refs[-1]
+    with paired.connection() as db:
+        assert db.execute('PRAGMA journal_mode=WAL').fetchone()[0] == 'wal'
+        for ref, state in ((earlier, 'READY'), (later, 'WRITING')):
+            db.execute("INSERT INTO version_manifest VALUES(?,?,?,?,?,?,?)",
+                       (paired.namespace, ref.documentId, ref.version, ref.contentHash, ref.contentHash, state, 1))
+
+    switched = False
+
+    class ConcurrentUpdate(sqlite3.Connection):
+        def execute(self, sql, args=()):
+            nonlocal switched
+            cursor = super().execute(sql, args)
+            if not switched and 'version_manifest' in sql and 'SELECT' in sql.upper():
+                switched = True
+                # A committed transition never has both versions ready in a single snapshot.
+                with sqlite3.connect(paired.path) as other:
+                    other.executemany("UPDATE version_manifest SET state=? WHERE namespace=? AND doc_id=?", [
+                        ('DELETED', paired.namespace, earlier.documentId),
+                        ('READY', paired.namespace, later.documentId),
+                    ])
+            return cursor
+
+    @contextmanager
+    def limited_connection():
+        connection = sqlite3.connect(paired.path, factory=ConcurrentUpdate)
+        connection.setlimit(sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER, 999)
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
+
+    monkeypatch.setattr(paired, 'connection', limited_connection)
+    assert paired._ready(refs) == [earlier]
+    assert switched and paired._ready(refs) == [later]
 
 
 @pytest.mark.parametrize('format_', ['text', 'markdown', 'pdf', 'video'])

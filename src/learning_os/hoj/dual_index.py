@@ -35,27 +35,6 @@ class DualKnowledgeIndex(KnowledgeIndex):
             raise ValueError('Experiment requires separate projections sharing model, client and scope')
         self.context = context
 
-    def _ready(self, refs, index=None):
-        index = self if index is None else index
-        if not refs:
-            return []
-        ready = set()
-        with index.connection() as db:
-            # Stay below SQLite's historical999 variable limit, even for large allowlists.
-            for start in range(0, len(refs), 64):
-                batch = refs[start:start + 64]
-                clause = ' OR '.join('(doc_id=? AND version=? AND content_hash=?)' for _ in batch)
-                parameters = [index.namespace]
-                for ref in batch:
-                    parameters.extend((ref.documentId, ref.version, ref.contentHash))
-                ready.update(db.execute('SELECT doc_id,version,content_hash FROM version_manifest '
-                    "WHERE namespace=? AND state='READY' AND (" + clause + ')', parameters).fetchall())
-        return [ref for ref in refs if (ref.documentId, ref.version, ref.contentHash) in ready]
-
-    def _recheck(self, refs, index=None):
-        if len(self._ready(refs, index)) != len(refs):
-            raise ServiceError(409, 'VERSION_CHANGED')
-
     def retrieve(self, request, deadline, *, observer=None):
         with locked(self.lock, deadline):
             if len({ref.key() for ref in request.allowedVersions}) != len(request.allowedVersions):
@@ -76,7 +55,7 @@ class DualKnowledgeIndex(KnowledgeIndex):
             scores = {str(point.id): point.score for point in semantic}
             points = self._complete_code_reference(semantic[:request.topK], request, ready, vector, scores, deadline)
             self._validate_points(points + semantic, expected, scores)
-            context_ready = self._ready(ready, self.context)
+            context_ready = self.context._ready(ready)
             context_hits, context_scores = [], {}
             if context_ready:
                 context_points = self.client.query_points(self.context.collection, query=vector,
@@ -101,7 +80,7 @@ class DualKnowledgeIndex(KnowledgeIndex):
         with locked(self.lock, deadline):
             check_deadline(deadline)
             self._recheck(ready)
-            self._recheck(context_ready, self.context)
+            self.context._recheck(context_ready)
             self._validate_points(points, expected, scores)
             items = [{key: p.payload[key] for key in ('documentId', 'version', 'contentHash', 'chunkId',
                       'chunkHash', 'chunkIndex', 'title', 'excerpt', 'headingPath')}
